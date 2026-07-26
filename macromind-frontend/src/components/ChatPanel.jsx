@@ -1,15 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Camera, Bookmark, Bot, User, Loader2 } from 'lucide-react'
-
-const MOCK_RESPONSES = {
-  default: (meal) => ({
-    text: `I've logged your meal. Here's the nutrition breakdown:`,
-    foods: [
-      { name: meal || 'Meal item', calories: 310, protein: 11, carbs: 52, fat: 4 }
-    ],
-    insight: 'This is a balanced, moderate-calorie meal. The carbohydrate content will give you steady energy, and the protein supports muscle maintenance.'
-  }),
-}
+import { Send, Camera, Bot, User, Loader2 } from 'lucide-react'
+import { analyzeMeal, analyzeMealPhoto } from '../api/mealApi'
 
 function NutritionCard({ food }) {
   return (
@@ -32,18 +23,21 @@ function NutritionCard({ food }) {
   )
 }
 
-export default function ChatPanel({ compact = false }) {
+function foodLines(foods) {
+  return foods.map(f => `• ${f.quantity ? f.quantity + ' ' : ''}${f.name}`).join('\n')
+}
+
+export default function ChatPanel({ compact = false, onAnalysisReady }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: "Hi! Tell me what you ate or drank — I'll calculate the calories and macros instantly. You can also describe exercise to log burned calories.",
-      foods: null,
-      insight: null,
+      text: "Hi! Tell me what you ate or drank — I'll calculate the calories and macros instantly. You can also upload a photo of your meal.",
     }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -56,11 +50,58 @@ export default function ChatPanel({ compact = false }) {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }])
     setLoading(true)
 
-    // Simulate AI response delay
-    await new Promise(r => setTimeout(r, 1200))
-    const resp = MOCK_RESPONSES.default(userMsg)
-    setMessages(prev => [...prev, { role: 'assistant', ...resp }])
-    setLoading(false)
+    try {
+      const res = await analyzeMeal(userMsg)
+      const analysis = res.data
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: `Meal analysed. I detected:\n${foodLines(analysis.foods)}`,
+        foods: analysis.foods,
+        outro: "Review the meal on the right and press Save when you're ready.",
+      }])
+
+      onAnalysisReady?.(analysis, userMsg)
+    } catch (error) {
+      console.error(error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: "I couldn't analyse that meal. Please try describing it again.",
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || loading) return
+
+    setMessages(prev => [...prev, { role: 'user', text: `📷 Uploaded ${file.name}` }])
+    setLoading(true)
+
+    try {
+      const res = await analyzeMealPhoto(file)
+      const analysis = res.data
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: `Photo analysed. I detected:\n${foodLines(analysis.foods)}`,
+        foods: analysis.foods,
+        outro: "Review the meal on the right and press Save when you're ready.",
+      }])
+
+      onAnalysisReady?.(analysis, "Photo meal")
+    } catch (error) {
+      console.error(error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: "I couldn't analyse that photo. Please try again.",
+      }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }
@@ -87,7 +128,7 @@ export default function ChatPanel({ compact = false }) {
               }
             </div>
             <div className={`max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-              <div className={`rounded-xl px-3 py-2 text-[13px] leading-relaxed ${
+              <div className={`rounded-xl px-3 py-2 text-[13px] leading-relaxed whitespace-pre-line ${
                 msg.role === 'user'
                   ? 'bg-brand-400 text-white rounded-tr-sm'
                   : 'bg-gray-50 text-gray-700 rounded-tl-sm'
@@ -95,9 +136,9 @@ export default function ChatPanel({ compact = false }) {
                 {msg.text}
               </div>
               {msg.foods?.map((food, j) => <NutritionCard key={j} food={food} />)}
-              {msg.insight && (
+              {msg.outro && (
                 <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-[11.5px] text-amber-700 leading-relaxed">
-                  💡 {msg.insight}
+                  💡 {msg.outro}
                 </div>
               )}
             </div>
@@ -131,7 +172,18 @@ export default function ChatPanel({ compact = false }) {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <button className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handlePhotoSelect}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 disabled:opacity-40 transition-colors"
+            >
               <Camera size={14} />
             </button>
             <button

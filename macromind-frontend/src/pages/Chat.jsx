@@ -1,33 +1,104 @@
+import { useEffect, useState } from "react";
 import Topbar from "../components/Topbar";
 import ChatPanel from "../components/ChatPanel";
-import { Flame, Beef, Wheat, Droplet } from "lucide-react";
+import TodayProgressCard from "../components/TodayProgressCard";
+import CurrentAnalysisCard from "../components/CurrentAnalysisCard";
+import SaveMealCard from "../components/SaveMealCard";
+import { getTodayDashboard } from "../api/dashboardApi";
+import { saveMeal } from "../api/mealApi";
 
-const recentMeals = [
-  { name: "Idli & Sambar", time: "Today, 8:30 AM", cal: 310 },
-  { name: "Sambar rice", time: "Today, 1:00 PM", cal: 380 },
-  { name: "Curd rice", time: "Yesterday, 7:00 PM", cal: 290 },
-  { name: "Poha", time: "Yesterday, 8:15 AM", cal: 250 },
-];
+function guessMealType() {
+  const hour = new Date().getHours();
+  if (hour < 11) return "breakfast";
+  if (hour < 16) return "lunch";
+  if (hour < 19) return "snack";
+  return "dinner";
+}
 
 export default function Chat() {
+  const [todayData, setTodayData] = useState(null);
+  const [analysis, setAnalysis] = useState(null); // { foods, totals, mealText }
+  const [mealType, setMealType] = useState(guessMealType());
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function loadToday() {
+    try {
+      const res = await getTodayDashboard();
+      setTodayData(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    loadToday();
+  }, []);
+
+  function handleAnalysisReady(result, mealText) {
+    setAnalysis({ ...result, mealText });
+    setEditing(false);
+  }
+
+  function handleFieldChange(field, value) {
+    setAnalysis((prev) => ({
+      ...prev,
+      totals: { ...prev.totals, [field]: value },
+    }));
+  }
+
+  async function handleSave() {
+    if (!analysis) return;
+
+    try {
+      setSaving(true);
+      await saveMeal({
+        mealType,
+        mealText: analysis.mealText,
+        analysis: { foods: analysis.foods, totals: analysis.totals },
+      });
+      await loadToday();
+      setAnalysis(null);
+      setEditing(false);
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to save meal");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleDiscard() {
+    setAnalysis(null);
+    setEditing(false);
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <Topbar
-        title="AI Nutrition"
-        subtitle="Describe meals or upload a photo"
-      />
+      <Topbar title="AI Nutrition" subtitle="Describe meals or upload a photo" />
 
       <div className="flex-1 overflow-y-auto p-5">
         <div className="grid grid-cols-3 gap-5">
-          {/* Chat — takes 2 cols */}
           <div className="col-span-2 h-[calc(100vh-140px)]">
-            <ChatPanel />
+            <ChatPanel onAnalysisReady={handleAnalysisReady} />
           </div>
 
-          {/* Right panel */}
           <div className="flex flex-col gap-4">
-
-
+            <TodayProgressCard data={todayData} />
+            <CurrentAnalysisCard
+              analysis={analysis}
+              editing={editing}
+              onEditToggle={() => setEditing((e) => !e)}
+              onFieldChange={handleFieldChange}
+            />
+            <SaveMealCard
+              analysis={analysis}
+              mealType={mealType}
+              onMealTypeChange={setMealType}
+              onSave={handleSave}
+              onDiscard={handleDiscard}
+              saving={saving}
+            />
           </div>
         </div>
       </div>

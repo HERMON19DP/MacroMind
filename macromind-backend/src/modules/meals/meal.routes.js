@@ -8,10 +8,24 @@ const mealService = require("./meal.service");
 
 router.post("/analyze", auth, async (req, res, next) => {
   try {
-    const result = await mealService.analyzeAndSaveMeal({
+    const analysis = await mealService.analyzeMeal(req.body.text);
+
+    res.json({
+      success: true,
+      data: analysis,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/save", auth, async (req, res, next) => {
+  try {
+    const result = await mealService.saveAnalyzedMeal({
       userId: req.user.id,
       mealType: req.body.mealType,
-      text: req.body.text,
+      mealText: req.body.mealText,
+      analysis: req.body.analysis,
     });
 
     res.json({

@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext'
 const navItems = [
   { label: 'Dashboard', to: '/overview', icon: LayoutDashboard },
   { label: 'AI Chat', to: '/chat', icon: MessageSquare },
-  { label: 'Meals', to: '/meals', icon: UtensilsCrossed },
   { label: 'Reports', to: '/reports', icon: BarChart2 },
   { label: 'Weight', to: '/weight', icon: Scale },
   { label: 'Water', to: '/water', icon: Droplets },

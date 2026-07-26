@@ -1,18 +1,18 @@
 const aiService = require("../ai/ai.service");
 const mealRepository = require("./meal.repository");
 
+async function analyzeMeal(text) {
+  return await aiService.analyzeMealText(text);
+}
+
 async function saveAnalyzedMeal(data) {
   const meal = await mealRepository.createMeal({
     userId: data.userId,
     mealType: data.mealType,
     mealText: data.mealText,
-
     totalCalories: data.analysis.totals.calories,
-
     totalProtein: data.analysis.totals.protein,
-
     totalCarbs: data.analysis.totals.carbs,
-
     totalFat: data.analysis.totals.fat,
   });
 
@@ -27,17 +27,6 @@ async function saveAnalyzedMeal(data) {
     meal,
     analysis: data.analysis,
   };
-}
-
-async function analyzeAndSaveMeal(data) {
-  const analysis = await aiService.analyzeMealText(data.text);
-
-  return saveAnalyzedMeal({
-    userId: data.userId,
-    mealType: data.mealType,
-    mealText: data.text,
-    analysis,
-  });
 }
 
 async function getRecentMeals(userId) {
@@ -55,7 +44,7 @@ async function deleteMeal(mealId, userId) {
 }
 
 module.exports = {
-  analyzeAndSaveMeal,
+  analyzeMeal,
   saveAnalyzedMeal,
   getRecentMeals,
   deleteMeal,

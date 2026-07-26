@@ -1,16 +1,9 @@
-import { getRecentMeals } from "../api/mealApi";
+import { getRecentMeals, analyzeMeal } from "../api/mealApi";
 import { useEffect, useState } from "react";
 import { getTodayDashboard } from "../api/dashboardApi";
 import DateDropdown from "../components/DateDropdown";
 import {
-  Flame,
-  Beef,
-  Wheat,
-  Droplet,
-  Sun,
-  Coffee,
-  Moon,
-  Apple,
+  Flame, Beef, Wheat, Droplet, Sun, Coffee, Moon, Apple, Plus,
 } from "lucide-react";
 import Topbar from "../components/Topbar";
 import MacroCard from "../components/MacroCard";
@@ -20,39 +13,53 @@ import { useAuth } from "../context/AuthContext";
 export default function Dashboard() {
   const { user } = useAuth();
   const [todayData, setTodayData] = useState(null);
-
   const [recentMeals, setRecentMeals] = useState([]);
 
-  const breakfastMeals = recentMeals.filter(
-    (meal) => meal.meal_type === "breakfast",
-  );
+  const [showModal, setShowModal] = useState(false);
+  const [mealType, setMealType] = useState("breakfast");
+  const [mealText, setMealText] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  const breakfastMeals = recentMeals.filter((meal) => meal.meal_type === "breakfast");
   const lunchMeals = recentMeals.filter((meal) => meal.meal_type === "lunch");
-
   const snackMeals = recentMeals.filter((meal) => meal.meal_type === "snack");
-
   const dinnerMeals = recentMeals.filter((meal) => meal.meal_type === "dinner");
 
   const consumed = todayData?.consumed?.calories || 0;
   const goal = todayData?.goals?.calories || 2400;
 
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const today = await getTodayDashboard();
-
-        const meals = await getRecentMeals();
-
-        setRecentMeals(meals.data);
-
-        setTodayData(today.data);
-      } catch (error) {
-        console.error(error);
-      }
+  async function loadDashboard() {
+    try {
+      const today = await getTodayDashboard();
+      const meals = await getRecentMeals();
+      setRecentMeals(meals.data);
+      setTodayData(today.data);
+    } catch (error) {
+      console.error(error);
     }
+  }
 
+  useEffect(() => {
     loadDashboard();
   }, []);
+
+  async function handleAddMeal() {
+    if (!mealText.trim()) return;
+
+    try {
+      setLoading(true);
+      await analyzeMeal(mealType, mealText);
+      await loadDashboard();
+      setMealText("");
+      setMealType("breakfast");
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to add meal");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const today = new Date();
   const dateStr = today.toLocaleDateString("en-IN", {
@@ -64,7 +71,6 @@ export default function Dashboard() {
   const week = [...Array(7)].map((_, i) => {
     const date = new Date();
     date.setDate(today.getDate() - today.getDay() + i + 1);
-
     return {
       day: date.toLocaleDateString("en-US", { weekday: "short" }),
       date: date.getDate(),
@@ -88,14 +94,9 @@ export default function Dashboard() {
                 d.isToday ? "bg-brand-400 text-white" : "hover:bg-gray-50"
               }`}
             >
-              <span
-                className={`text-[11px] ${
-                  d.isToday ? "text-white/80" : "text-gray-400"
-                }`}
-              >
+              <span className={`text-[11px] ${d.isToday ? "text-white/80" : "text-gray-400"}`}>
                 {d.day}
               </span>
-
               <span className="text-lg font-semibold mt-1">{d.date}</span>
             </button>
           ))}
@@ -104,38 +105,19 @@ export default function Dashboard() {
 
       <div className="flex-1 overflow-y-auto px-5 pb-5">
         {/* Macro summary row */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-4 gap-3 mb-5 mt-5">
+          <MacroCard label="Calories" value={consumed} unit="kcal" goal={goal} color="brand" icon={Flame} />
           <MacroCard
-            label="Calories"
-            value={consumed}
-            unit="kcal"
-            goal={goal}
-            color="brand"
-            icon={Flame}
+            label="Protein" value={todayData?.consumed?.protein || 0} unit="g"
+            goal={todayData?.goals?.protein || 150} color="violet" icon={Beef}
           />
           <MacroCard
-            label="Protein"
-            value={todayData?.consumed?.protein || 0}
-            unit="g"
-            goal={todayData?.goals?.protein || 150}
-            color="violet"
-            icon={Beef}
+            label="Carbs" value={todayData?.consumed?.carbs || 0} unit="g"
+            goal={todayData?.goals?.carbs || 280} color="blue" icon={Wheat}
           />
           <MacroCard
-            label="Carbs"
-            value={todayData?.consumed?.carbs || 0}
-            unit="g"
-            goal={todayData?.goals?.carbs || 280}
-            color="blue"
-            icon={Wheat}
-          />
-          <MacroCard
-            label="Fat"
-            value={todayData?.consumed?.fat || 0}
-            unit="g"
-            goal={todayData?.goals?.fat || 80}
-            color="amber"
-            icon={Droplet}
+            label="Fat" value={todayData?.consumed?.fat || 0} unit="g"
+            goal={todayData?.goals?.fat || 80} color="amber" icon={Droplet}
           />
         </div>
 
@@ -143,65 +125,85 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Today's Meals
-              </h2>
-
+              <h2 className="text-lg font-semibold text-gray-900">Today's Meals</h2>
               <p className="text-sm text-gray-400">Meals you've logged today</p>
             </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-1.5 text-[12.5px] font-medium text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              <Plus size={14} /> Add meal
+            </button>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <MealCard
-              title="Breakfast"
-              icon={Coffee}
-              items={breakfastMeals.map((meal) => ({
-                name: meal.meal_text,
-                calories: Number(meal.total_calories),
-              }))}
-              totalCal={breakfastMeals.reduce(
-                (sum, meal) => sum + Number(meal.total_calories),
-                0,
-              )}
+              title="Breakfast" icon={Coffee}
+              items={breakfastMeals.map((meal) => ({ name: meal.meal_text, calories: Number(meal.total_calories) }))}
+              totalCal={breakfastMeals.reduce((sum, meal) => sum + Number(meal.total_calories), 0)}
             />
             <MealCard
-              title="Lunch"
-              icon={Sun}
-              items={lunchMeals.map((meal) => ({
-                name: meal.meal_text,
-                calories: Number(meal.total_calories),
-              }))}
-              totalCal={lunchMeals.reduce(
-                (sum, meal) => sum + Number(meal.total_calories),
-                0,
-              )}
+              title="Lunch" icon={Sun}
+              items={lunchMeals.map((meal) => ({ name: meal.meal_text, calories: Number(meal.total_calories) }))}
+              totalCal={lunchMeals.reduce((sum, meal) => sum + Number(meal.total_calories), 0)}
             />
             <MealCard
-              title="Snacks"
-              icon={Apple}
-              items={snackMeals.map((meal) => ({
-                name: meal.meal_text,
-                calories: Number(meal.total_calories),
-              }))}
-              totalCal={snackMeals.reduce(
-                (sum, meal) => sum + Number(meal.total_calories),
-                0,
-              )}
+              title="Snacks" icon={Apple}
+              items={snackMeals.map((meal) => ({ name: meal.meal_text, calories: Number(meal.total_calories) }))}
+              totalCal={snackMeals.reduce((sum, meal) => sum + Number(meal.total_calories), 0)}
             />
             <MealCard
-              title="Dinner"
-              icon={Moon}
-              items={dinnerMeals.map((meal) => ({
-                name: meal.meal_text,
-                calories: Number(meal.total_calories),
-              }))}
-              totalCal={dinnerMeals.reduce(
-                (sum, meal) => sum + Number(meal.total_calories),
-                0,
-              )}
+              title="Dinner" icon={Moon}
+              items={dinnerMeals.map((meal) => ({ name: meal.meal_text, calories: Number(meal.total_calories) }))}
+              totalCal={dinnerMeals.reduce((sum, meal) => sum + Number(meal.total_calories), 0)}
             />
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Add Meal</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm mb-1">Meal Type</label>
+                <select
+                  value={mealType}
+                  onChange={(e) => setMealType(e.target.value)}
+                  className="w-full border rounded-xl px-3 py-2"
+                >
+                  <option value="breakfast">Breakfast</option>
+                  <option value="lunch">Lunch</option>
+                  <option value="dinner">Dinner</option>
+                  <option value="snack">Snack</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Food Description</label>
+                <textarea
+                  value={mealText}
+                  onChange={(e) => setMealText(e.target.value)}
+                  rows={4}
+                  placeholder="2 idlis and sambar"
+                  className="w-full border rounded-xl px-3 py-2"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowModal(false)} className="flex-1 border rounded-xl py-2">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddMeal}
+                  disabled={loading}
+                  className="flex-1 bg-brand-400 text-white rounded-xl py-2"
+                >
+                  {loading ? "Analyzing..." : "Analyze Meal"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
