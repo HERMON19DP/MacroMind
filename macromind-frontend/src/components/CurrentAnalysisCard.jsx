@@ -1,4 +1,4 @@
-import { CheckCircle2, Pencil, UtensilsCrossed } from "lucide-react";
+import { CheckCircle2, UtensilsCrossed } from "lucide-react";
 
 const MACROS = [
   { key: "calories", label: "Calories", unit: "" },
@@ -7,7 +7,7 @@ const MACROS = [
   { key: "fat", label: "Fat", unit: "g" },
 ];
 
-export default function CurrentAnalysisCard({ analysis, editing, onEditToggle, onFieldChange }) {
+export default function CurrentAnalysisCard({ analysis }) {
   if (!analysis) {
     return (
       <div className="bg-white rounded-xl border border-gray-100 p-4">
@@ -25,15 +25,7 @@ export default function CurrentAnalysisCard({ analysis, editing, onEditToggle, o
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[13px] font-semibold text-gray-800">Current Analysis</p>
-        <button
-          onClick={onEditToggle}
-          className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 font-medium"
-        >
-          <Pencil size={11} /> {editing ? "Done" : "Edit"}
-        </button>
-      </div>
+      <p className="text-[13px] font-semibold text-gray-800 mb-3">Current Analysis</p>
 
       <div className="space-y-1.5 mb-3">
         {foods.map((f, i) => (
@@ -48,18 +40,9 @@ export default function CurrentAnalysisCard({ analysis, editing, onEditToggle, o
         {MACROS.map((m) => (
           <div key={m.key} className="flex items-center justify-between bg-gray-50 rounded-lg px-2.5 py-1.5">
             <span className="text-[11px] text-gray-500">{m.label}</span>
-            {editing ? (
-              <input
-                type="number"
-                value={totals[m.key] ?? 0}
-                onChange={(e) => onFieldChange(m.key, Number(e.target.value))}
-                className="w-14 text-right text-[12px] font-semibold text-gray-800 bg-white border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-brand-400"
-              />
-            ) : (
-              <span className="text-[12px] font-semibold text-gray-800">
-                {totals[m.key] ?? 0}{m.unit}
-              </span>
-            )}
+            <span className="text-[12px] font-semibold text-gray-800">
+              {totals[m.key] ?? 0}{m.unit}
+            </span>
           </div>
         ))}
       </div>

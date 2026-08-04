@@ -17,9 +17,8 @@ function guessMealType() {
 
 export default function Chat() {
   const [todayData, setTodayData] = useState(null);
-  const [analysis, setAnalysis] = useState(null); // { foods, totals, mealText }
+  const [analysis, setAnalysis] = useState(null);
   const [mealType, setMealType] = useState(guessMealType());
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   async function loadToday() {
@@ -37,14 +36,6 @@ export default function Chat() {
 
   function handleAnalysisReady(result, mealText) {
     setAnalysis({ ...result, mealText });
-    setEditing(false);
-  }
-
-  function handleFieldChange(field, value) {
-    setAnalysis((prev) => ({
-      ...prev,
-      totals: { ...prev.totals, [field]: value },
-    }));
   }
 
   async function handleSave() {
@@ -59,7 +50,6 @@ export default function Chat() {
       });
       await loadToday();
       setAnalysis(null);
-      setEditing(false);
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Failed to save meal");
@@ -70,7 +60,6 @@ export default function Chat() {
 
   function handleDiscard() {
     setAnalysis(null);
-    setEditing(false);
   }
 
   return (
@@ -85,12 +74,7 @@ export default function Chat() {
 
           <div className="flex flex-col gap-4">
             <TodayProgressCard data={todayData} />
-            <CurrentAnalysisCard
-              analysis={analysis}
-              editing={editing}
-              onEditToggle={() => setEditing((e) => !e)}
-              onFieldChange={handleFieldChange}
-            />
+            <CurrentAnalysisCard analysis={analysis} />
             <SaveMealCard
               analysis={analysis}
               mealType={mealType}

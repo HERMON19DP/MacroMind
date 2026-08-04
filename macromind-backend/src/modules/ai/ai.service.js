@@ -1,23 +1,50 @@
 const model = require("../../config/gemini");
-const buildMealPrompt = require("./prompts/mealPrompt");
+const { buildFallbackMealPrompt } = require("./prompts/mealPrompt");
 const parseMealResponse = require("./parsers/mealParser");
+const { parseMealText } = require("./services/mealTextParser");
 
 async function testGemini(prompt) {
   const result = await model.generateContent(prompt);
-
   const response = await result.response;
-
   return response.text();
 }
 
 async function analyzeMealText(mealText) {
-  const prompt = buildMealPrompt(mealText);
+  const { matched, unmatched } = parseMealText(mealText);
 
-  const result = await model.generateContent(prompt);
+  let aiFoods = [];
 
-  const response = await result.response;
+  if (unmatched.length > 0) {
+    const prompt = buildFallbackMealPrompt(unmatched.map((u) => u.raw));
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const aiResult = parseMealResponse(response.text());
+    aiFoods = aiResult.foods || [];
+  }
 
-  return parseMealResponse(response.text());
+  const foods = [...matched, ...aiFoods];
+
+  const totals = foods.reduce(
+    (acc, f) => ({
+      calories: acc.calories + Number(f.calories || 0),
+      protein: acc.protein + Number(f.protein || 0),
+      carbs: acc.carbs + Number(f.carbs || 0),
+      fat: acc.fat + Number(f.fat || 0),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const round = (n) => Math.round(n * 100) / 100;
+
+  return {
+    foods,
+    totals: {
+      calories: round(totals.calories),
+      protein: round(totals.protein),
+      carbs: round(totals.carbs),
+      fat: round(totals.fat),
+    },
+  };
 }
 
 module.exports = {
