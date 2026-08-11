@@ -6,20 +6,17 @@ import CurrentAnalysisCard from "../components/CurrentAnalysisCard";
 import SaveMealCard from "../components/SaveMealCard";
 import { getTodayDashboard } from "../api/dashboardApi";
 import { saveMeal } from "../api/mealApi";
-
-function guessMealType() {
-  const hour = new Date().getHours();
-  if (hour < 11) return "breakfast";
-  if (hour < 16) return "lunch";
-  if (hour < 19) return "snack";
-  return "dinner";
-}
+import { useChatStore } from "../store/chatStore";
 
 export default function Chat() {
   const [todayData, setTodayData] = useState(null);
-  const [analysis, setAnalysis] = useState(null);
-  const [mealType, setMealType] = useState(guessMealType());
   const [saving, setSaving] = useState(false);
+
+  const analysis = useChatStore((s) => s.analysis);
+  const mealType = useChatStore((s) => s.mealType);
+  const setAnalysis = useChatStore((s) => s.setAnalysis);
+  const setMealType = useChatStore((s) => s.setMealType);
+  const clearAnalysis = useChatStore((s) => s.clearAnalysis);
 
   async function loadToday() {
     try {
@@ -49,7 +46,7 @@ export default function Chat() {
         analysis: { foods: analysis.foods, totals: analysis.totals },
       });
       await loadToday();
-      setAnalysis(null);
+      clearAnalysis();
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Failed to save meal");
@@ -59,7 +56,7 @@ export default function Chat() {
   }
 
   function handleDiscard() {
-    setAnalysis(null);
+    clearAnalysis();
   }
 
   return (

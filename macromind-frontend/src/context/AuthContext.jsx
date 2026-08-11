@@ -33,6 +33,14 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
   };
 
+  const updateUser = (partialUser) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...partialUser };
+      localStorage.setItem("user", JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -40,6 +48,7 @@ export function AuthProvider({ children }) {
         isAuthenticated,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

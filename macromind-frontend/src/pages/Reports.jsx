@@ -7,6 +7,7 @@ import { TrendingUp, Award, Flame, Beef } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import { getWeekDashboard } from '../api/dashboardApi'
 import { getGoals } from '../api/goalsApi'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
@@ -30,6 +31,7 @@ function buildWeekRange() {
 }
 
 export default function Reports() {
+  usePageTitle('Weekly Report')
   const [weekData, setWeekData] = useState([])
   const [calorieGoal, setCalorieGoal] = useState(2000)
   const [loading, setLoading] = useState(true)

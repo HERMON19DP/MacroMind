@@ -18,6 +18,8 @@ const userGoalRoutes = require("./src/modules/users/userGoals.routes");
 
 const photoRoutes = require("./src/modules/meals/photo.routes");
 
+const weightRoutes = require("./src/modules/weight/weight.routes");
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
@@ -35,6 +37,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userGoalRoutes);
 
 app.use("/api/meals", photoRoutes);
+
+app.use("/api/weight", weightRoutes);
 
 app.use(errorHandler);
 

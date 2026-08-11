@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Droplets, Plus, Minus } from 'lucide-react'
 import Topbar from '../components/Topbar'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const GOAL_ML = 3000
 const quickAmounts = [150, 200, 250, 350, 500]
@@ -14,6 +15,7 @@ const logs = [
 ]
 
 export default function Water() {
+  usePageTitle('Water Intake')
   const [total, setTotal] = useState(1250)
 
   const pct = Math.min((total / GOAL_ML) * 100, 100)

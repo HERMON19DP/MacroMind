@@ -3,8 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { Leaf, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../api/authApi";
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Login() {
+  usePageTitle('Log in')
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login } = useAuth();
@@ -25,7 +27,7 @@ export default function Login() {
         response.data.refreshToken,
       );
 
-      navigate("/overview");
+      navigate("/overview", { replace: true });
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");
     }

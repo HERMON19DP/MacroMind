@@ -1,5 +1,6 @@
 import { Heart, Plus, Zap } from 'lucide-react'
 import Topbar from '../components/Topbar'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const favorites = [
   { name: 'Idli & Sambar', calories: 310, protein: 11, carbs: 52, fat: 4, emoji: '🍚', uses: 24 },
@@ -11,6 +12,7 @@ const favorites = [
 ]
 
 export default function Favorites() {
+  usePageTitle('Favorites')
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <Topbar title="Favorites" subtitle="Your frequently logged meals — one click to log" />

@@ -1,51 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { TrendingDown, Target, Calendar, Plus } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import WeightChart from '../components/WeightChart'
-import { useAuth } from '../context/AuthContext'
-
-const allData = {
-  week: [
-    { date: 'Jun 3', weight: 79.2 }, { date: 'Jun 4', weight: 79.0 },
-    { date: 'Jun 5', weight: 78.8 }, { date: 'Jun 6', weight: 78.9 },
-    { date: 'Jun 7', weight: 78.5 }, { date: 'Jun 8', weight: 78.3 },
-    { date: 'Jun 9', weight: 78.1 },
-  ],
-  month: [
-    { date: 'May 12', weight: 80.1 }, { date: 'May 15', weight: 79.9 },
-    { date: 'May 18', weight: 79.6 }, { date: 'May 21', weight: 79.4 },
-    { date: 'May 24', weight: 79.2 }, { date: 'May 27', weight: 79.0 },
-    { date: 'May 30', weight: 78.8 }, { date: 'Jun 3', weight: 79.2 },
-    { date: 'Jun 6', weight: 78.9 }, { date: 'Jun 9', weight: 78.1 },
-  ],
-  '3months': [
-    { date: 'Mar 1', weight: 82.5 }, { date: 'Mar 15', weight: 82.0 },
-    { date: 'Apr 1', weight: 81.2 }, { date: 'Apr 15', weight: 80.8 },
-    { date: 'May 1', weight: 80.4 }, { date: 'May 15', weight: 79.9 },
-    { date: 'Jun 1', weight: 79.2 }, { date: 'Jun 9', weight: 78.1 },
-  ],
-}
-
-const logs = [
-  { date: 'Jun 9, 2025', weight: 78.1 },
-  { date: 'Jun 8, 2025', weight: 78.3 },
-  { date: 'Jun 7, 2025', weight: 78.5 },
-  { date: 'Jun 6, 2025', weight: 78.9 },
-  { date: 'Jun 5, 2025', weight: 78.8 },
-  { date: 'Jun 3, 2025', weight: 79.2 },
-  { date: 'May 30, 2025', weight: 79.8 },
-]
+import { getWeightData, logWeight } from '../api/weightApi'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Weight() {
-  const { user } = useAuth()
+  usePageTitle('Weight Tracker')
   const [range, setRange] = useState('month')
+  const [data, setData] = useState({ chart: [], logs: [], summary: {} })
+  const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [newWeight, setNewWeight] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const current = 78.1
-  const target = user?.targetWeight || 74
-  const change = -(82.5 - current).toFixed(1)
-  const toGo = (current - target).toFixed(1)
+  const load = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await getWeightData(range)
+      setData(res.data)
+    } catch (error) {
+      console.error('Failed to load weight data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [range])
+
+  useEffect(() => { load() }, [load])
+
+  const { current, target, totalLost, toGoal } = data.summary || {}
+  const fmt = v => (v === null || v === undefined ? '--' : `${v} kg`)
+
+  const handleSaveWeight = async () => {
+    const value = parseFloat(newWeight)
+    if (!value || saving) return
+
+    try {
+      setSaving(true)
+      await logWeight(value)
+      setNewWeight('')
+      setShowAdd(false)
+      await load()
+    } catch (error) {
+      console.error(error)
+      alert(error.response?.data?.message || 'Failed to log weight')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -55,10 +57,10 @@ export default function Weight() {
         {/* Stat cards */}
         <div className="grid grid-cols-4 gap-3 mb-5">
           {[
-            { label: 'Current weight', value: `${current} kg`, icon: TrendingDown, sub: 'As of today', color: 'text-brand-600' },
-            { label: 'Target weight',  value: `${target} kg`,  icon: Target,       sub: 'Your goal',   color: 'text-blue-600' },
-            { label: 'Total lost',     value: `4.4 kg`,        icon: TrendingDown, sub: 'Since start',  color: 'text-green-600' },
-            { label: 'To goal',        value: `${toGo} kg`,    icon: Calendar,     sub: 'Remaining',   color: 'text-amber-600' },
+            { label: 'Current weight', value: fmt(current), icon: TrendingDown, sub: 'As of today', color: 'text-brand-600' },
+            { label: 'Target weight',  value: fmt(target),  icon: Target,       sub: 'Your goal',   color: 'text-blue-600' },
+            { label: 'Total lost',     value: fmt(totalLost), icon: TrendingDown, sub: 'Since start', color: 'text-green-600' },
+            { label: 'To goal',        value: fmt(toGoal),    icon: Calendar,     sub: 'Remaining',   color: 'text-amber-600' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4">
               <div className="flex items-center justify-between mb-2">
@@ -89,7 +91,16 @@ export default function Weight() {
               ))}
             </div>
           </div>
-          <WeightChart data={allData[range]} targetWeight={target} />
+
+          {loading ? (
+            <div className="h-[220px] flex items-center justify-center text-[12px] text-gray-400">Loading...</div>
+          ) : data.chart.length === 0 ? (
+            <div className="h-[220px] flex items-center justify-center text-[12px] text-gray-400">
+              No weight logs yet for this range
+            </div>
+          ) : (
+            <WeightChart data={data.chart} targetWeight={target} />
+          )}
         </div>
 
         {/* Log list + add */}
@@ -114,8 +125,12 @@ export default function Weight() {
                 placeholder="Enter weight in kg"
                 className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand-400"
               />
-              <button className="bg-brand-400 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors">
-                Save
+              <button
+                onClick={handleSaveWeight}
+                disabled={saving || !newWeight}
+                className="bg-brand-400 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-40"
+              >
+                {saving ? 'Saving...' : 'Save'}
               </button>
               <button onClick={() => setShowAdd(false)} className="text-[12px] text-gray-400 hover:text-gray-600">
                 Cancel
@@ -123,22 +138,26 @@ export default function Weight() {
             </div>
           )}
 
-          {logs.map((log, i) => (
-            <div key={i} className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0">
-              <span className="text-[12.5px] text-gray-600">{log.date}</span>
-              <div className="flex items-center gap-3">
-                <span className="text-[13px] font-semibold text-gray-900">{log.weight} kg</span>
-                {i > 0 && (
-                  <span className={`text-[11px] font-medium ${
-                    log.weight > logs[i - 1].weight ? 'text-red-500' : 'text-green-500'
-                  }`}>
-                    {log.weight > logs[i - 1].weight ? '▲' : '▼'}
-                    {Math.abs(log.weight - logs[i - 1].weight).toFixed(1)} kg
-                  </span>
-                )}
+          {data.logs.length === 0 ? (
+            <div className="px-4 py-6 text-center text-[12px] text-gray-400">No weight logged yet</div>
+          ) : (
+            data.logs.map((log, i) => (
+              <div key={log.id} className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0">
+                <span className="text-[12.5px] text-gray-600">{log.date}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[13px] font-semibold text-gray-900">{log.weight} kg</span>
+                  {i > 0 && (
+                    <span className={`text-[11px] font-medium ${
+                      log.weight > data.logs[i - 1].weight ? 'text-red-500' : 'text-green-500'
+                    }`}>
+                      {log.weight > data.logs[i - 1].weight ? '▲' : '▼'}
+                      {Math.abs(log.weight - data.logs[i - 1].weight).toFixed(1)} kg
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

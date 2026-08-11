@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Camera, Bot, User, Loader2 } from 'lucide-react'
 import { analyzeMeal, analyzeMealPhoto } from '../api/mealApi'
+import { useChatStore } from '../store/chatStore'
 
 function NutritionCard({ food }) {
   return (
@@ -28,12 +29,9 @@ function foodLines(foods) {
 }
 
 export default function ChatPanel({ compact = false, onAnalysisReady }) {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      text: "Hi! Tell me what you ate or drank — I'll calculate the calories and macros instantly. You can also upload a photo of your meal.",
-    }
-  ])
+  const messages = useChatStore((s) => s.messages)
+  const addMessage = useChatStore((s) => s.addMessage)
+
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
@@ -47,27 +45,27 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
     if (!input.trim() || loading) return
     const userMsg = input.trim()
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    addMessage({ role: 'user', text: userMsg })
     setLoading(true)
 
     try {
       const res = await analyzeMeal(userMsg)
       const analysis = res.data
 
-      setMessages(prev => [...prev, {
+      addMessage({
         role: 'assistant',
         text: `Meal analysed. I detected:\n${foodLines(analysis.foods)}`,
         foods: analysis.foods,
         outro: "Review the meal on the right and press Save when you're ready.",
-      }])
+      })
 
       onAnalysisReady?.(analysis, userMsg)
     } catch (error) {
       console.error(error)
-      setMessages(prev => [...prev, {
+      addMessage({
         role: 'assistant',
         text: "I couldn't analyse that meal. Please try describing it again.",
-      }])
+      })
     } finally {
       setLoading(false)
     }
@@ -78,27 +76,27 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
     e.target.value = ""
     if (!file || loading) return
 
-    setMessages(prev => [...prev, { role: 'user', text: `📷 Uploaded ${file.name}` }])
+    addMessage({ role: 'user', text: `📷 Uploaded ${file.name}` })
     setLoading(true)
 
     try {
       const res = await analyzeMealPhoto(file)
       const analysis = res.data
 
-      setMessages(prev => [...prev, {
+      addMessage({
         role: 'assistant',
         text: `Photo analysed. I detected:\n${foodLines(analysis.foods)}`,
         foods: analysis.foods,
         outro: "Review the meal on the right and press Save when you're ready.",
-      }])
+      })
 
       onAnalysisReady?.(analysis, "Photo meal")
     } catch (error) {
       console.error(error)
-      setMessages(prev => [...prev, {
+      addMessage({
         role: 'assistant',
         text: "I couldn't analyse that photo. Please try again.",
-      }])
+      })
     } finally {
       setLoading(false)
     }

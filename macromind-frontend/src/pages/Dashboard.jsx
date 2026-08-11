@@ -9,8 +9,10 @@ import Topbar from "../components/Topbar";
 import MacroCard from "../components/MacroCard";
 import MealCard from "../components/MealCard";
 import { useAuth } from "../context/AuthContext";
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Dashboard() {
+  usePageTitle('Dashboard')
   const { user } = useAuth();
   const [todayData, setTodayData] = useState(null);
   const [recentMeals, setRecentMeals] = useState([]);
