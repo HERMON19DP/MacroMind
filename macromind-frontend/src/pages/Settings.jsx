@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react'
-import { User, Target, Bell, Trash2, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { User, Target, Bell, Trash2, Loader2, Sparkles } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import { useAuth } from '../context/AuthContext'
-import { getMe, updateProfile } from '../api/userApi'
+import { getMe, updateProfile, getSuggestedCalories } from '../api/userApi'
 import { getGoals, updateGoals } from '../api/goalsApi'
-import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Settings() {
-  usePageTitle('Settings')
   const { updateUser } = useAuth()
   const [form, setForm] = useState({
-    name: '', email: '', age: '', height: '', weight: '',
+    name: '', email: '', age: '', gender: '', height: '', weight: '',
     targetWeight: '', goal: 'Lose weight', dailyCalorieGoal: 2000,
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [suggested, setSuggested] = useState(null)
+  const [suggestLoading, setSuggestLoading] = useState(false)
+  const debounceRef = useRef(null)
 
   useEffect(() => {
     async function load() {
@@ -28,6 +29,7 @@ export default function Settings() {
           name: profile.name || '',
           email: profile.email || '',
           age: profile.age ?? '',
+          gender: profile.gender || '',
           height: profile.height_cm ?? '',
           weight: profile.weight_kg ?? '',
           targetWeight: profile.target_weight_kg ?? '',
@@ -43,7 +45,45 @@ export default function Settings() {
     load()
   }, [])
 
+  // Re-fetch a suggested calorie goal whenever the inputs that drive it change.
+  useEffect(() => {
+    if (loading) return
+
+    const { age, gender, height, weight, goal } = form
+    if (!age || !gender || !height || !weight) {
+      setSuggested(null)
+      return
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        setSuggestLoading(true)
+        const res = await getSuggestedCalories({
+          weight: Number(weight),
+          height: Number(height),
+          age: Number(age),
+          gender,
+          goal,
+        })
+        setSuggested(res.suggestedCalories)
+      } catch (error) {
+        console.error('Failed to get suggested calories:', error)
+      } finally {
+        setSuggestLoading(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(debounceRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.age, form.gender, form.height, form.weight, form.goal, loading])
+
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+
+  const applySuggestion = () => {
+    if (suggested) setForm(f => ({ ...f, dailyCalorieGoal: suggested }))
+  }
 
   const handleSave = async () => {
     try {
@@ -53,6 +93,7 @@ export default function Settings() {
       const profileRes = await updateProfile({
         name: form.name,
         age: form.age ? Number(form.age) : null,
+        gender: form.gender || null,
         height: form.height ? Number(form.height) : null,
         weight: form.weight ? Number(form.weight) : null,
         targetWeight: form.targetWeight ? Number(form.targetWeight) : null,
@@ -117,6 +158,20 @@ export default function Settings() {
                   />
                 </div>
               ))}
+
+              <div>
+                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">Gender</label>
+                <select
+                  name="gender"
+                  value={form.gender}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                >
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -140,10 +195,29 @@ export default function Settings() {
                   <option>Maintain weight</option>
                 </select>
               </div>
+
               <div>
-                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
-                  Daily calorie goal — <span className="text-brand-600 font-semibold">{form.dailyCalorieGoal} kcal</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-medium text-gray-500">
+                    Daily calorie goal — <span className="text-brand-600 font-semibold">{form.dailyCalorieGoal} kcal</span>
+                  </label>
+
+                  {suggestLoading && (
+                    <span className="text-[10.5px] text-gray-400 flex items-center gap-1">
+                      <Loader2 size={10} className="animate-spin" /> Calculating...
+                    </span>
+                  )}
+
+                  {!suggestLoading && suggested && suggested !== Number(form.dailyCalorieGoal) && (
+                    <button
+                      onClick={applySuggestion}
+                      className="text-[10.5px] font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
+                    >
+                      <Sparkles size={11} /> Use suggested {suggested} kcal
+                    </button>
+                  )}
+                </div>
+
                 <input
                   type="range" name="dailyCalorieGoal"
                   min="1200" max="4000" step="50"
@@ -154,6 +228,12 @@ export default function Settings() {
                 <div className="flex justify-between text-[10.5px] text-gray-400 mt-1">
                   <span>1200</span><span>4000</span>
                 </div>
+
+                {!suggested && !suggestLoading && (
+                  <p className="text-[10.5px] text-gray-400 mt-2">
+                    Fill in age, gender, height, and weight above to get a suggested calorie goal.
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -17,10 +17,11 @@ async function updateProfile(userId, data) {
     `UPDATE users SET
       name = COALESCE($2, name),
       age = COALESCE($3, age),
-      height_cm = COALESCE($4, height_cm),
-      weight_kg = COALESCE($5, weight_kg),
-      target_weight_kg = COALESCE($6, target_weight_kg),
-      goal_type = COALESCE($7, goal_type),
+      gender = COALESCE($4, gender),
+      height_cm = COALESCE($5, height_cm),
+      weight_kg = COALESCE($6, weight_kg),
+      target_weight_kg = COALESCE($7, target_weight_kg),
+      goal_type = COALESCE($8, goal_type),
       updated_at = CURRENT_TIMESTAMP
      WHERE id = $1
      RETURNING id, email, name, age, gender, height_cm, weight_kg,
@@ -29,6 +30,7 @@ async function updateProfile(userId, data) {
       userId,
       data.name,
       data.age,
+      data.gender,
       data.height,
       data.weight,
       data.targetWeight,

@@ -75,10 +75,9 @@ async function getRecentMeals(userId) {
     FROM meals
 
     WHERE user_id = $1
+    AND DATE(created_at) = CURRENT_DATE
 
     ORDER BY created_at DESC
-
-    LIMIT 10
     `,
     [userId],
   );
