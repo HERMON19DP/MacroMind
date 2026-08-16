@@ -29,8 +29,8 @@ async function saveAnalyzedMeal(data) {
   };
 }
 
-async function getRecentMeals(userId) {
-  return await mealRepository.getRecentMeals(userId);
+async function getRecentMeals(userId, date) {
+  return await mealRepository.getRecentMeals(userId, date);
 }
 
 async function deleteMeal(mealId, userId) {

@@ -11,7 +11,7 @@ const navItems = [
   { label: 'Reports', to: '/reports', icon: BarChart2 },
   { label: 'Weight', to: '/weight', icon: Scale },
   { label: 'Water', to: '/water', icon: Droplets },
-  { label: 'Favorites', to: '/favorites', icon: Heart },
+  // { label: 'Favorites', to: '/favorites', icon: Heart }, favorites page is disabled for now 
 ]
 
 export default function Sidebar() {

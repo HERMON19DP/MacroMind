@@ -19,11 +19,28 @@ import MealCard from "../components/MealCard";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 
+function toDateOnly(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function toISODate(d) {
+  const x = toDateOnly(d);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function Dashboard() {
   usePageTitle("Dashboard");
   const { user } = useAuth();
   const [todayData, setTodayData] = useState(null);
   const [recentMeals, setRecentMeals] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(() =>
+    toDateOnly(new Date()),
+  );
 
   const [showModal, setShowModal] = useState(false);
   const [mealType, setMealType] = useState("breakfast");
@@ -40,10 +57,11 @@ export default function Dashboard() {
   const consumed = todayData?.consumed?.calories || 0;
   const goal = todayData?.goals?.calories || 2400;
 
-  async function loadDashboard() {
+  async function loadDashboard(date = selectedDate) {
     try {
-      const today = await getTodayDashboard();
-      const meals = await getRecentMeals();
+      const iso = toISODate(date);
+      const today = await getTodayDashboard(iso);
+      const meals = await getRecentMeals(iso);
       setRecentMeals(meals.data);
       setTodayData(today.data);
     } catch (error) {
@@ -52,8 +70,8 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    loadDashboard(selectedDate);
+  }, [selectedDate]);
 
   async function handleAddMeal() {
     if (!mealText.trim()) return;
@@ -73,20 +91,23 @@ export default function Dashboard() {
     }
   }
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("en-IN", {
+  const realToday = toDateOnly(new Date());
+  const dateStr = selectedDate.toLocaleDateString("en-IN", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
 
   const week = [...Array(7)].map((_, i) => {
-    const date = new Date();
-    date.setDate(today.getDate() - today.getDay() + i + 1);
+    const date = new Date(realToday);
+    date.setDate(realToday.getDate() - realToday.getDay() + i); // Sunday-start, includes today
+    const dateOnly = toDateOnly(date);
     return {
       day: date.toLocaleDateString("en-US", { weekday: "short" }),
       date: date.getDate(),
-      isToday: date.toDateString() === today.toDateString(),
+      fullDate: dateOnly,
+      isFuture: dateOnly.getTime() > realToday.getTime(),
+      isSelected: dateOnly.getTime() === toDateOnly(selectedDate).getTime(),
     };
   });
 
@@ -102,12 +123,18 @@ export default function Dashboard() {
           {week.map((d) => (
             <button
               key={d.day}
+              disabled={d.isFuture}
+              onClick={() => setSelectedDate(d.fullDate)}
               className={`flex flex-col items-center justify-center rounded-xl px-4 py-2 transition-all ${
-                d.isToday ? "bg-brand-400 text-white" : "hover:bg-gray-50"
+                d.isFuture
+                  ? "opacity-30 cursor-not-allowed"
+                  : d.isSelected
+                    ? "bg-brand-400 text-white"
+                    : "hover:bg-gray-50"
               }`}
             >
               <span
-                className={`text-[11px] ${d.isToday ? "text-white/80" : "text-gray-400"}`}
+                className={`text-[11px] ${d.isSelected && !d.isFuture ? "text-white/80" : "text-gray-400"}`}
               >
                 {d.day}
               </span>

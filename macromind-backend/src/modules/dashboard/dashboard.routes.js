@@ -8,12 +8,11 @@ const dashboardService = require("./dashboard.service");
 
 router.get("/today", auth, async (req, res, next) => {
   try {
-    const summary = await dashboardService.getTodaySummary(req.user.id);
-
-    res.json({
-      success: true,
-      data: summary,
-    });
+    const summary = await dashboardService.getTodaySummary(
+      req.user.id,
+      req.query.date,
+    );
+    res.json({ success: true, data: summary });
   } catch (error) {
     next(error);
   }

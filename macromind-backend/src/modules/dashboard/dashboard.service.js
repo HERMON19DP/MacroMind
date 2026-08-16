@@ -2,8 +2,8 @@ const dashboardRepository = require("./dashboard.repository");
 
 const userGoalsRepository = require("../users/userGoals.repository");
 
-async function getTodaySummary(userId) {
-  const summary = await dashboardRepository.getTodaySummary(userId);
+async function getTodaySummary(userId, date) {
+  const summary = await dashboardRepository.getTodaySummary(userId, date);
 
   const goals = await userGoalsRepository.getGoals(userId);
 

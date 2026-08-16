@@ -59,29 +59,17 @@ async function createMealFood(food) {
   );
 }
 
-async function getRecentMeals(userId) {
+async function getRecentMeals(userId, date) {
   const result = await pool.query(
     `
-    SELECT
-      id,
-      meal_type,
-      meal_text,
-      total_calories,
-      total_protein,
-      total_carbs,
-      total_fat,
-      created_at
-
+    SELECT id, meal_type, meal_text, total_calories, total_protein, total_carbs, total_fat, created_at
     FROM meals
-
     WHERE user_id = $1
-    AND DATE(created_at) = CURRENT_DATE
-
+    AND DATE(created_at) = COALESCE($2::date, CURRENT_DATE)
     ORDER BY created_at DESC
     `,
-    [userId],
+    [userId, date || null],
   );
-
   return result.rows;
 }
 
@@ -105,5 +93,5 @@ module.exports = {
   createMeal,
   createMealFood,
   getRecentMeals,
-  deleteMeal
+  deleteMeal,
 };

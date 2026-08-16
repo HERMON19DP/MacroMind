@@ -39,12 +39,8 @@ router.post("/save", auth, async (req, res, next) => {
 
 router.get("/recent", auth, async (req, res, next) => {
   try {
-    const meals = await mealService.getRecentMeals(req.user.id);
-
-    res.json({
-      success: true,
-      data: meals,
-    });
+    const meals = await mealService.getRecentMeals(req.user.id, req.query.date);
+    res.json({ success: true, data: meals });
   } catch (error) {
     next(error);
   }

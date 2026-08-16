@@ -1,7 +1,9 @@
 import api from "./axios";
 
-export async function getRecentMeals() {
-  const response = await api.get("/meals/recent");
+export async function getRecentMeals(date) {
+  const response = await api.get("/meals/recent", {
+    params: date ? { date } : {},
+  });
   return response.data;
 }
 
@@ -22,7 +24,11 @@ export async function analyzeMealPhoto(file) {
 }
 
 export async function saveMeal({ mealType, mealText, analysis }) {
-  const response = await api.post("/meals/save", { mealType, mealText, analysis });
+  const response = await api.post("/meals/save", {
+    mealType,
+    mealText,
+    analysis,
+  });
   return response.data;
 }
 
