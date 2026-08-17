@@ -4,8 +4,10 @@ import Topbar from '../components/Topbar'
 import { useAuth } from '../context/AuthContext'
 import { getMe, updateProfile, getSuggestedCalories } from '../api/userApi'
 import { getGoals, updateGoals } from '../api/goalsApi'
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function Settings() {
+  usePageTitle("Settings")
   const { updateUser } = useAuth()
   const [form, setForm] = useState({
     name: '', email: '', age: '', gender: '', height: '', weight: '',

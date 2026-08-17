@@ -7,8 +7,10 @@ import SaveMealCard from "../components/SaveMealCard";
 import { getTodayDashboard } from "../api/dashboardApi";
 import { saveMeal } from "../api/mealApi";
 import { useChatStore } from "../store/chatStore";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function Chat() {
+  usePageTitle("AI Chat")
   const [todayData, setTodayData] = useState(null);
   const [saving, setSaving] = useState(false);
 

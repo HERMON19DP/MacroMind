@@ -57,47 +57,44 @@ export default function MealCard({
           {items.length === 0 ? (
             <div className="py-8 flex flex-col items-center">
               <p className="text-[12px] text-gray-400">No meals logged</p>
-
               <button className="mt-3 text-[12px] font-medium text-brand-600 hover:text-brand-700 transition-colors">
                 + Add Food
               </button>
             </div>
           ) : (
             <>
-              {items.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 group"
-                >
-                  <div>
-                    <p className="text-[13px] font-medium text-gray-800">
-                      {item.name}
-                    </p>
-
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      {item.carbs ?? 0}g carbs {" • "}
-                      {item.protein ?? 0}g protein {" • "}
-                      {item.fat ?? 0}g fat
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className="text-[12px] font-semibold text-gray-700">
-                      {item.calories} kcal
-                    </span>
-
-                    <div className="hidden group-hover:flex items-center gap-1">
-                      <button className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-                        <Pencil size={12} />
-                      </button>
-
-                      <button className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                        <Trash2 size={12} />
-                      </button>
+              <div className="max-h-[192px] overflow-y-auto">
+                {items.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 group"
+                  >
+                    <div>
+                      <p className="text-[13px] font-medium text-gray-800">
+                        {item.name}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        {item.carbs ?? 0}g carbs {" • "}
+                        {item.protein ?? 0}g protein {" • "}
+                        {item.fat ?? 0}g fat
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[12px] font-semibold text-gray-700">
+                        {item.calories} kcal
+                      </span>
+                      <div className="hidden group-hover:flex items-center gap-1">
+                        <button className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
+                          <Pencil size={12} />
+                        </button>
+                        <button className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               {/* Footer */}
               <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[12px] font-medium text-brand-600 hover:bg-brand-50 transition-colors">
