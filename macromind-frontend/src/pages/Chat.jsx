@@ -17,6 +17,7 @@ export default function Chat() {
   const setAnalysis = useChatStore((s) => s.setAnalysis);
   const setMealType = useChatStore((s) => s.setMealType);
   const clearAnalysis = useChatStore((s) => s.clearAnalysis);
+  const checkNewDay = useChatStore((s) => s.checkNewDay);
 
   async function loadToday() {
     try {
@@ -28,6 +29,7 @@ export default function Chat() {
   }
 
   useEffect(() => {
+    checkNewDay();
     loadToday();
   }, []);
 

@@ -3,10 +3,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { Leaf, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../api/authApi";
-import { usePageTitle } from '../hooks/usePageTitle'
+import { usePageTitle } from "../hooks/usePageTitle";
+import { useLocation } from "react-router-dom";
 
 export default function Login() {
-  usePageTitle('Log in')
+  usePageTitle("Log in");
+  const location = useLocation();
+  const sessionExpired = location.state?.sessionExpired;
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login } = useAuth();

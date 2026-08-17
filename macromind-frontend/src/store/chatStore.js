@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 const initialMessage = {
   role: "assistant",
@@ -13,24 +14,56 @@ function guessMealType() {
   return "dinner";
 }
 
-export const useChatStore = create((set) => ({
-  messages: [initialMessage],
-  analysis: null,
-  mealType: guessMealType(),
+function todayKey() {
+  return new Date().toDateString(); // e.g. "Mon Aug 18 2026"
+}
 
-  addMessage: (msg) =>
-    set((state) => ({ messages: [...state.messages, msg] })),
-
-  setAnalysis: (analysis) => set({ analysis }),
-
-  setMealType: (mealType) => set({ mealType }),
-
-  clearAnalysis: () => set({ analysis: null }),
-
-  resetChat: () =>
-    set({
+export const useChatStore = create(
+  persist(
+    (set, get) => ({
       messages: [initialMessage],
       analysis: null,
       mealType: guessMealType(),
+      lastActiveDate: todayKey(),
+
+      addMessage: (msg) =>
+        set((state) => ({ messages: [...state.messages, msg] })),
+
+      setAnalysis: (analysis) => set({ analysis }),
+
+      setMealType: (mealType) => set({ mealType }),
+
+      clearAnalysis: () => set({ analysis: null }),
+
+      resetChat: () =>
+        set({
+          messages: [initialMessage],
+          analysis: null,
+          mealType: guessMealType(),
+          lastActiveDate: todayKey(),
+        }),
+
+      // Called once on app load to drop stale (yesterday's) state
+      checkNewDay: () => {
+        const today = todayKey();
+        if (get().lastActiveDate !== today) {
+          set({
+            messages: [initialMessage],
+            analysis: null,
+            mealType: guessMealType(),
+            lastActiveDate: today,
+          });
+        }
+      },
     }),
-}));
+    {
+      name: "macromind-chat-storage", // localStorage key
+      partialize: (state) => ({
+        messages: state.messages,
+        analysis: state.analysis,
+        mealType: state.mealType,
+        lastActiveDate: state.lastActiveDate,
+      }),
+    }
+  )
+);
