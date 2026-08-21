@@ -1,6 +1,6 @@
-import { getRecentMeals, analyzeMeal } from "../api/mealApi";
+import { getRecentMeals, analyzeMeal, deleteMeal } from "../api/mealApi";
 import { useEffect, useState } from "react";
-import { getTodayDashboard } from "../api/dashboardApi";
+import { getTodayDashboard, getWeekDashboard } from "../api/dashboardApi";
 import DateDropdown from "../components/DateDropdown";
 import {
   Flame,
@@ -18,6 +18,7 @@ import MacroCard from "../components/MacroCard";
 import MealCard from "../components/MealCard";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
+import WeeklyMiniChart from "../components/WeeklyMiniChart";
 
 function toDateOnly(d) {
   const x = new Date(d);
@@ -43,7 +44,7 @@ export default function Dashboard() {
   const [recentMeals, setRecentMeals] = useState([]);
 
   const [selectedDate, setSelectedDate] = useState(() =>
-    toDateOnly(new Date())
+    toDateOnly(new Date()),
   );
 
   const [showModal, setShowModal] = useState(false);
@@ -52,20 +53,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   const breakfastMeals = recentMeals.filter(
-    (meal) => meal.meal_type === "breakfast"
+    (meal) => meal.meal_type === "breakfast",
   );
 
-  const lunchMeals = recentMeals.filter(
-    (meal) => meal.meal_type === "lunch"
-  );
+  const lunchMeals = recentMeals.filter((meal) => meal.meal_type === "lunch");
 
-  const snackMeals = recentMeals.filter(
-    (meal) => meal.meal_type === "snack"
-  );
+  const snackMeals = recentMeals.filter((meal) => meal.meal_type === "snack");
 
-  const dinnerMeals = recentMeals.filter(
-    (meal) => meal.meal_type === "dinner"
-  );
+  const dinnerMeals = recentMeals.filter((meal) => meal.meal_type === "dinner");
 
   const consumed = todayData?.consumed?.calories || 0;
   const goal = todayData?.goals?.calories || 2400;
@@ -103,16 +98,24 @@ export default function Dashboard() {
     } catch (error) {
       console.error(error);
 
-      alert(
-        error.response?.data?.message ||
-          "Failed to add meal"
-      );
+      alert(error.response?.data?.message || "Failed to add meal");
     } finally {
       setLoading(false);
     }
   }
 
+  async function handleDeleteMeal(mealId) {
+    try {
+      await deleteMeal(mealId);
+      await loadDashboard();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to delete meal");
+    }
+  }
+
   const realToday = toDateOnly(new Date());
+  const isToday = toDateOnly(selectedDate).getTime() === realToday.getTime();
 
   const dateStr = selectedDate.toLocaleDateString("en-IN", {
     weekday: "long",
@@ -123,11 +126,7 @@ export default function Dashboard() {
   const week = [...Array(7)].map((_, i) => {
     const date = new Date(realToday);
 
-    date.setDate(
-      realToday.getDate() -
-        realToday.getDay() +
-        i
-    );
+    date.setDate(realToday.getDate() - realToday.getDay() + i);
 
     const dateOnly = toDateOnly(date);
 
@@ -140,32 +139,52 @@ export default function Dashboard() {
 
       fullDate: dateOnly,
 
-      isFuture:
-        dateOnly.getTime() >
-        realToday.getTime(),
+      isFuture: dateOnly.getTime() > realToday.getTime(),
 
-      isSelected:
-        dateOnly.getTime() ===
-        toDateOnly(selectedDate).getTime(),
+      isSelected: dateOnly.getTime() === toDateOnly(selectedDate).getTime(),
     };
   });
 
+  const [weekChartData, setWeekChartData] = useState([]);
+
+  useEffect(() => {
+    async function loadWeekChart() {
+      try {
+        const res = await getWeekDashboard();
+        const byDate = {};
+        res.data.forEach((d) => {
+          byDate[new Date(d.date).toDateString()] = d;
+        });
+
+        const merged = week.map((w) => {
+          const entry = byDate[w.fullDate.toDateString()];
+          return {
+            day: w.day,
+            fullDate: w.fullDate,
+            calories: entry ? Number(entry.calories) : 0,
+          };
+        });
+
+        setWeekChartData(merged);
+      } catch (error) {
+        console.error("Failed to load week chart:", error);
+      }
+    }
+
+    loadWeekChart();
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-
       {/* =====================================================
           FIXED TOPBAR
           ===================================================== */}
-      <Topbar
-        title="Dashboard"
-        subtitle="Daily Overview"
-      />
+      <Topbar title="Dashboard" subtitle="Daily Overview" />
 
       {/* =====================================================
           SINGLE DASHBOARD SCROLL CONTAINER
           ===================================================== */}
       <div className="flex-1 overflow-y-auto">
-
         {/* ===================================================
             DATE + WEEK SECTION
 
@@ -174,7 +193,6 @@ export default function Dashboard() {
             over this section.
             =================================================== */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5">
-
           {/* Today dropdown */}
           <div className="mb-5">
             <DateDropdown dateStr={dateStr} />
@@ -182,17 +200,14 @@ export default function Dashboard() {
 
           {/* Week selector */}
           <div className="bg-white rounded-2xl border border-gray-100 p-3 inline-flex gap-2 shadow-sm">
-
             {week.map((d) => (
               <button
                 key={d.day}
                 disabled={d.isFuture}
-                onClick={() =>
-                  setSelectedDate(d.fullDate)
-                }
+                onClick={() => setSelectedDate(d.fullDate)}
                 className={`flex flex-col items-center justify-center rounded-xl px-4 py-2 transition-all ${
                   d.isFuture
-                    ? "opacity-30 cursor-not-allowed"
+                    ? "opacity-40 cursor-not-allowed"
                     : d.isSelected
                       ? "bg-brand-400 text-white"
                       : "hover:bg-gray-50"
@@ -200,8 +215,7 @@ export default function Dashboard() {
               >
                 <span
                   className={`text-[11px] ${
-                    d.isSelected &&
-                    !d.isFuture
+                    d.isSelected && !d.isFuture
                       ? "text-white/80"
                       : "text-gray-400"
                   }`}
@@ -209,12 +223,9 @@ export default function Dashboard() {
                   {d.day}
                 </span>
 
-                <span className="text-lg font-semibold mt-1">
-                  {d.date}
-                </span>
+                <span className="text-lg font-semibold mt-1">{d.date}</span>
               </button>
             ))}
-
           </div>
         </div>
 
@@ -226,12 +237,10 @@ export default function Dashboard() {
             OVER the week section while scrolling.
             =================================================== */}
         <div className="relative z-20 bg-gray-50 px-5 pb-8">
-
           {/* =================================================
               MACRO SUMMARY
               ================================================= */}
           <div className="grid grid-cols-4 gap-3 mb-8 pt-5">
-
             <MacroCard
               label="Calories"
               value={consumed}
@@ -243,52 +252,37 @@ export default function Dashboard() {
 
             <MacroCard
               label="Protein"
-              value={
-                todayData?.consumed?.protein || 0
-              }
+              value={todayData?.consumed?.protein || 0}
               unit="g"
-              goal={
-                todayData?.goals?.protein || 150
-              }
+              goal={todayData?.goals?.protein || 150}
               color="violet"
               icon={Beef}
             />
 
             <MacroCard
               label="Carbs"
-              value={
-                todayData?.consumed?.carbs || 0
-              }
+              value={todayData?.consumed?.carbs || 0}
               unit="g"
-              goal={
-                todayData?.goals?.carbs || 280
-              }
+              goal={todayData?.goals?.carbs || 280}
               color="blue"
               icon={Wheat}
             />
 
             <MacroCard
               label="Fat"
-              value={
-                todayData?.consumed?.fat || 0
-              }
+              value={todayData?.consumed?.fat || 0}
               unit="g"
-              goal={
-                todayData?.goals?.fat || 80
-              }
+              goal={todayData?.goals?.fat || 80}
               color="amber"
               icon={Droplet}
             />
-
           </div>
 
           {/* =================================================
               TODAY'S MEALS
               ================================================= */}
           <div>
-
             <div className="flex items-center justify-between mb-4">
-
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
                   Today's Meals
@@ -299,7 +293,8 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <button
+              {/* add meal button */}
+              {/* <button
                 onClick={() =>
                   setShowModal(true)
                 }
@@ -307,140 +302,87 @@ export default function Dashboard() {
               >
                 <Plus size={14} />
                 Add meal
-              </button>
-
+              </button> */}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-
+            <div className="grid grid-cols-2 gap-4 items-start">
               {/* Breakfast */}
               <MealCard
                 title="Breakfast"
                 icon={Coffee}
-                items={breakfastMeals.map(
-                  (meal) => ({
-                    name: meal.meal_text,
-                    calories: Number(
-                      meal.total_calories
-                    ),
-                    carbs: Number(
-                      meal.total_carbs
-                    ),
-                    protein: Number(
-                      meal.total_protein
-                    ),
-                    fat: Number(
-                      meal.total_fat
-                    ),
-                  })
-                )}
+                items={breakfastMeals.map((meal) => ({
+                  id: meal.id,
+                  name: meal.meal_text,
+                  calories: Number(meal.total_calories),
+                  carbs: Number(meal.total_carbs),
+                  protein: Number(meal.total_protein),
+                  fat: Number(meal.total_fat),
+                }))}
                 totalCal={breakfastMeals.reduce(
-                  (sum, meal) =>
-                    sum +
-                    Number(
-                      meal.total_calories
-                    ),
-                  0
+                  (sum, meal) => sum + Number(meal.total_calories),
+                  0,
                 )}
+                onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
               {/* Lunch */}
               <MealCard
                 title="Lunch"
                 icon={Sun}
-                items={lunchMeals.map(
-                  (meal) => ({
-                    name: meal.meal_text,
-                    calories: Number(
-                      meal.total_calories
-                    ),
-                    carbs: Number(
-                      meal.total_carbs
-                    ),
-                    protein: Number(
-                      meal.total_protein
-                    ),
-                    fat: Number(
-                      meal.total_fat
-                    ),
-                  })
-                )}
+                items={lunchMeals.map((meal) => ({
+                  id: meal.id,
+                  name: meal.meal_text,
+                  calories: Number(meal.total_calories),
+                  carbs: Number(meal.total_carbs),
+                  protein: Number(meal.total_protein),
+                  fat: Number(meal.total_fat),
+                }))}
                 totalCal={lunchMeals.reduce(
-                  (sum, meal) =>
-                    sum +
-                    Number(
-                      meal.total_calories
-                    ),
-                  0
+                  (sum, meal) => sum + Number(meal.total_calories),
+                  0,
                 )}
+                onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
               {/* Dinner */}
               <MealCard
                 title="Dinner"
                 icon={Moon}
-                items={dinnerMeals.map(
-                  (meal) => ({
-                    name: meal.meal_text,
-                    calories: Number(
-                      meal.total_calories
-                    ),
-                    carbs: Number(
-                      meal.total_carbs
-                    ),
-                    protein: Number(
-                      meal.total_protein
-                    ),
-                    fat: Number(
-                      meal.total_fat
-                    ),
-                  })
-                )}
+                items={dinnerMeals.map((meal) => ({
+                  id: meal.id,
+                  name: meal.meal_text,
+                  calories: Number(meal.total_calories),
+                  carbs: Number(meal.total_carbs),
+                  protein: Number(meal.total_protein),
+                  fat: Number(meal.total_fat),
+                }))}
                 totalCal={dinnerMeals.reduce(
-                  (sum, meal) =>
-                    sum +
-                    Number(
-                      meal.total_calories
-                    ),
-                  0
+                  (sum, meal) => sum + Number(meal.total_calories),
+                  0,
                 )}
+                onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
               {/* Snacks */}
               <MealCard
                 title="Snacks"
                 icon={Apple}
-                items={snackMeals.map(
-                  (meal) => ({
-                    name: meal.meal_text,
-                    calories: Number(
-                      meal.total_calories
-                    ),
-                    carbs: Number(
-                      meal.total_carbs
-                    ),
-                    protein: Number(
-                      meal.total_protein
-                    ),
-                    fat: Number(
-                      meal.total_fat
-                    ),
-                  })
-                )}
+                items={snackMeals.map((meal) => ({
+                  id: meal.id,
+                  name: meal.meal_text,
+                  calories: Number(meal.total_calories),
+                  carbs: Number(meal.total_carbs),
+                  protein: Number(meal.total_protein),
+                  fat: Number(meal.total_fat),
+                }))}
                 totalCal={snackMeals.reduce(
-                  (sum, meal) =>
-                    sum +
-                    Number(
-                      meal.total_calories
-                    ),
-                  0
+                  (sum, meal) => sum + Number(meal.total_calories),
+                  0,
                 )}
+                onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
-
             </div>
-
           </div>
-
         </div>
       </div>
 
@@ -449,57 +391,36 @@ export default function Dashboard() {
           ===================================================== */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-
-            <h2 className="text-lg font-semibold mb-4">
-              Add Meal
-            </h2>
+            <h2 className="text-lg font-semibold mb-4">Add Meal</h2>
 
             <div className="space-y-4">
-
               {/* Meal type */}
               <div>
-                <label className="block text-sm mb-1">
-                  Meal Type
-                </label>
+                <label className="block text-sm mb-1">Meal Type</label>
 
                 <select
                   value={mealType}
-                  onChange={(e) =>
-                    setMealType(e.target.value)
-                  }
+                  onChange={(e) => setMealType(e.target.value)}
                   className="w-full border rounded-xl px-3 py-2"
                 >
-                  <option value="breakfast">
-                    Breakfast
-                  </option>
+                  <option value="breakfast">Breakfast</option>
 
-                  <option value="lunch">
-                    Lunch
-                  </option>
+                  <option value="lunch">Lunch</option>
 
-                  <option value="dinner">
-                    Dinner
-                  </option>
+                  <option value="dinner">Dinner</option>
 
-                  <option value="snack">
-                    Snack
-                  </option>
+                  <option value="snack">Snack</option>
                 </select>
               </div>
 
               {/* Food description */}
               <div>
-                <label className="block text-sm mb-1">
-                  Food Description
-                </label>
+                <label className="block text-sm mb-1">Food Description</label>
 
                 <textarea
                   value={mealText}
-                  onChange={(e) =>
-                    setMealText(e.target.value)
-                  }
+                  onChange={(e) => setMealText(e.target.value)}
                   rows={4}
                   placeholder="2 idlis and sambar"
                   className="w-full border rounded-xl px-3 py-2"
@@ -508,11 +429,8 @@ export default function Dashboard() {
 
               {/* Actions */}
               <div className="flex gap-2">
-
                 <button
-                  onClick={() =>
-                    setShowModal(false)
-                  }
+                  onClick={() => setShowModal(false)}
                   className="flex-1 border rounded-xl py-2"
                 >
                   Cancel
@@ -523,19 +441,13 @@ export default function Dashboard() {
                   disabled={loading}
                   className="flex-1 bg-brand-400 text-white rounded-xl py-2"
                 >
-                  {loading
-                    ? "Analyzing..."
-                    : "Analyze Meal"}
+                  {loading ? "Analyzing..." : "Analyze Meal"}
                 </button>
-
               </div>
-
             </div>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

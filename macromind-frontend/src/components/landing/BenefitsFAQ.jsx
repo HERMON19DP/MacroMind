@@ -52,7 +52,7 @@ export default function BenefitsFAQ() {
 
   return (
     <>
-      <section className="py-24 sm:py-28">
+      {/* <section className="py-24 sm:py-28">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="max-w-xl mb-14">
             <p className="text-[12px] font-semibold text-brand-600 uppercase tracking-wide mb-3">Why MacroMind</p>
@@ -80,7 +80,7 @@ export default function BenefitsFAQ() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section id="faq" className="py-24 sm:py-28 bg-gray-50">
         <div className="max-w-2xl mx-auto px-5 sm:px-8">

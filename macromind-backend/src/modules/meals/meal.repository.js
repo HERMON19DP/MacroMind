@@ -77,10 +77,9 @@ async function deleteMeal(mealId, userId) {
   const result = await pool.query(
     `
     DELETE FROM meals
-
     WHERE id = $1
     AND user_id = $2
-
+    AND DATE(created_at) = CURRENT_DATE
     RETURNING *
     `,
     [mealId, userId],
