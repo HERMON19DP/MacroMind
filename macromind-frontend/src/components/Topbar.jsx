@@ -1,4 +1,4 @@
-import { Bell, Search } from "lucide-react";
+// import { Bell, Search } from "lucide-react";
 
 export default function Topbar({ title, subtitle }) {
   return (
@@ -15,15 +15,15 @@ export default function Topbar({ title, subtitle }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+          {/* <button className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
             <Search size={18} />
-          </button>
+          </button> */}
 
-          <button className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+          {/* <button className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
             <Bell size={18} />
 
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-400" />
-          </button>
+          </button> */}
         </div>
       </div>
     </header>

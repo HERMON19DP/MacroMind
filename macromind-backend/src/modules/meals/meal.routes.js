@@ -5,6 +5,7 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 
 const mealService = require("./meal.service");
+const { validateOptionalDate } = require("../../utils/dateValidation");
 
 router.post("/analyze", auth, async (req, res, next) => {
   try {
@@ -39,7 +40,9 @@ router.post("/save", auth, async (req, res, next) => {
 
 router.get("/recent", auth, async (req, res, next) => {
   try {
-    const meals = await mealService.getRecentMeals(req.user.id, req.query.date);
+    const date = validateOptionalDate(req.query.date);
+
+    const meals = await mealService.getRecentMeals(req.user.id, date);
     res.json({ success: true, data: meals });
   } catch (error) {
     next(error);

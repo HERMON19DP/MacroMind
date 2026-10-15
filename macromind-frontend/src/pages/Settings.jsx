@@ -1,96 +1,143 @@
-import { useState, useEffect, useRef } from 'react'
-import { User, Target, Bell, Trash2, Loader2, Sparkles } from 'lucide-react'
-import Topbar from '../components/Topbar'
-import { useAuth } from '../context/AuthContext'
-import { getMe, updateProfile, getSuggestedCalories } from '../api/userApi'
-import { getGoals, updateGoals } from '../api/goalsApi'
+import { useState, useEffect, useRef } from "react";
+import { User, Target, Bell, Trash2, Loader2, Sparkles } from "lucide-react";
+import Topbar from "../components/Topbar";
+import { useAuth } from "../context/AuthContext";
+import { getMe, updateProfile, getSuggestedCalories } from "../api/userApi";
+import { getGoals, updateGoals } from "../api/goalsApi";
 import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function Settings() {
-  usePageTitle("Settings")
-  const { updateUser } = useAuth()
+  usePageTitle("Settings");
+  const { updateUser } = useAuth();
   const [form, setForm] = useState({
-    name: '', email: '', age: '', gender: '', height: '', weight: '',
-    targetWeight: '', goal: 'Lose weight', dailyCalorieGoal: 2000,
-  })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [suggested, setSuggested] = useState(null)
-  const [suggestLoading, setSuggestLoading] = useState(false)
-  const debounceRef = useRef(null)
+    name: "",
+    email: "",
+    age: "",
+    gender: "",
+    height: "",
+    weight: "",
+    targetWeight: "",
+    goal: "Lose weight",
+    dailyCalorieGoal: 2000,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [initialForm, setInitialForm] = useState(null);
+  const [suggested, setSuggested] = useState(null);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const debounceRef = useRef(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [profileRes, goalsRes] = await Promise.all([getMe(), getGoals()])
-        const profile = profileRes.user
-        const goals = goalsRes.data
+        const [profileRes, goalsRes] = await Promise.all([getMe(), getGoals()]);
+        const profile = profileRes.user;
+        const goals = goalsRes.data;
 
-        setForm({
-          name: profile.name || '',
-          email: profile.email || '',
-          age: profile.age ?? '',
-          gender: profile.gender || '',
-          height: profile.height_cm ?? '',
-          weight: profile.weight_kg ?? '',
-          targetWeight: profile.target_weight_kg ?? '',
-          goal: profile.goal_type || 'Lose weight',
+        const loadedForm = {
+          name: profile.name || "",
+          email: profile.email || "",
+          age: profile.age ?? "",
+          gender: profile.gender || "",
+          height: profile.height_cm ?? "",
+          weight: profile.weight_kg ?? "",
+          targetWeight: profile.target_weight_kg ?? "",
+          goal: profile.goal_type || "Lose weight",
           dailyCalorieGoal: goals?.calorie_goal ?? 2000,
-        })
+        };
+
+        setForm(loadedForm);
+        setInitialForm(loadedForm);
       } catch (error) {
-        console.error('Failed to load settings:', error)
+        console.error("Failed to load settings:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    load()
-  }, [])
+    load();
+  }, []);
 
   // Re-fetch a suggested calorie goal whenever the inputs that drive it change.
   useEffect(() => {
-    if (loading) return
+    if (loading) return;
 
-    const { age, gender, height, weight, goal } = form
+    const { age, gender, height, weight, goal } = form;
     if (!age || !gender || !height || !weight) {
-      setSuggested(null)
-      return
+      setSuggested(null);
+      return;
     }
 
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
       try {
-        setSuggestLoading(true)
+        setSuggestLoading(true);
         const res = await getSuggestedCalories({
           weight: Number(weight),
           height: Number(height),
           age: Number(age),
           gender,
           goal,
-        })
-        setSuggested(res.suggestedCalories)
+        });
+        setSuggested(res.suggestedCalories);
       } catch (error) {
-        console.error('Failed to get suggested calories:', error)
+        console.error("Failed to get suggested calories:", error);
       } finally {
-        setSuggestLoading(false)
+        setSuggestLoading(false);
       }
-    }, 500)
+    }, 500);
 
-    return () => clearTimeout(debounceRef.current)
+    return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.age, form.gender, form.height, form.weight, form.goal, loading])
+  }, [form.age, form.gender, form.height, form.weight, form.goal, loading]);
 
-  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const hasUnsavedChanges =
+    initialForm !== null &&
+    Object.keys(form).some(
+      (key) => String(form[key] ?? "") !== String(initialForm[key] ?? ""),
+    );
+
+  const profileFields = [
+    "name",
+    "age",
+    "gender",
+    "height",
+    "weight",
+    "targetWeight",
+  ];
+
+  const profileHasChanges =
+    initialForm !== null &&
+    profileFields.some(
+      (key) => String(form[key] ?? "") !== String(initialForm[key] ?? ""),
+    );
+
+  const goalHasChanges =
+    initialForm !== null &&
+    ["goal", "dailyCalorieGoal"].some(
+      (key) => String(form[key] ?? "") !== String(initialForm[key] ?? ""),
+    );
+
+  const handleChange = (e) => {
+    setSaved(false);
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  };
 
   const applySuggestion = () => {
-    if (suggested) setForm(f => ({ ...f, dailyCalorieGoal: suggested }))
-  }
+    if (suggested) {
+      setSaved(false);
+      setForm((f) => ({
+        ...f,
+        dailyCalorieGoal: suggested,
+      }));
+    }
+  };
 
   const handleSave = async () => {
     try {
-      setSaving(true)
-      setSaved(false)
+      setSaving(true);
+      setSaved(false);
 
       const profileRes = await updateProfile({
         name: form.name,
@@ -100,56 +147,111 @@ export default function Settings() {
         weight: form.weight ? Number(form.weight) : null,
         targetWeight: form.targetWeight ? Number(form.targetWeight) : null,
         goal: form.goal,
-      })
+      });
 
-      await updateGoals({ calorieGoal: Number(form.dailyCalorieGoal) })
+      await updateGoals({ calorieGoal: Number(form.dailyCalorieGoal) });
 
-      updateUser(profileRes.user)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      updateUser(profileRes.user);
+      setInitialForm({ ...form });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (error) {
-      console.error(error)
-      alert(error.response?.data?.message || 'Failed to save settings')
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to save settings");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar title="Settings" subtitle="Manage your profile and preferences" />
+        <Topbar
+          title="Settings"
+          subtitle="Manage your profile and preferences"
+        />
         <div className="flex-1 flex items-center justify-center text-gray-400 text-[13px] gap-2">
           <Loader2 size={16} className="animate-spin" /> Loading...
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <Topbar title="Settings" subtitle="Manage your profile and preferences" />
 
+      {hasUnsavedChanges && (
+        <div className="sticky top-0 z-20 px-5 pt-3">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-amber-600 font-bold">!</span>
+              <div>
+                <p className="text-[12.5px] font-semibold text-amber-800">
+                  Unsaved changes
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  Remember to save your settings.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="shrink-0 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save now"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-5">
         <div className="max-w-2xl mx-auto space-y-5">
-
           {/* Profile */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
               <User size={14} className="text-gray-400" />
               <p className="text-[13px] font-semibold text-gray-800">Profile</p>
+
+              {profileHasChanges && (
+                <span className="ml-auto rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                  Unsaved
+                </span>
+              )}
             </div>
             <div className="p-4 grid grid-cols-2 gap-3">
               {[
-                { label: 'Full name', name: 'name', type: 'text' },
-                { label: 'Email', name: 'email', type: 'email', disabled: true },
-                { label: 'Age', name: 'age', type: 'number' },
-                { label: 'Height (cm)', name: 'height', type: 'number' },
-                { label: 'Current weight (kg)', name: 'weight', type: 'number' },
-                { label: 'Target weight (kg)', name: 'targetWeight', type: 'number' },
-              ].map(f => (
+                { label: "Full name", name: "name", type: "text" },
+                {
+                  label: "Email",
+                  name: "email",
+                  type: "email",
+                  disabled: true,
+                },
+                { label: "Age", name: "age", type: "number" },
+                { label: "Height (cm)", name: "height", type: "number" },
+                {
+                  label: "Current weight (kg)",
+                  name: "weight",
+                  type: "number",
+                },
+                {
+                  label: "Target weight (kg)",
+                  name: "targetWeight",
+                  type: "number",
+                },
+              ].map((f) => (
                 <div key={f.name}>
-                  <label className="text-[11px] font-medium text-gray-500 block mb-1.5">{f.label}</label>
+                  <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
+                    {f.label}
+                  </label>
                   <input
                     type={f.type}
                     name={f.name}
@@ -162,7 +264,9 @@ export default function Settings() {
               ))}
 
               <div>
-                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">Gender</label>
+                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
+                  Gender
+                </label>
                 <select
                   name="gender"
                   value={form.gender}
@@ -181,11 +285,21 @@ export default function Settings() {
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
               <Target size={14} className="text-gray-400" />
-              <p className="text-[13px] font-semibold text-gray-800">Goal settings</p>
+              <p className="text-[13px] font-semibold text-gray-800">
+                Goal settings
+              </p>
+
+              {goalHasChanges && (
+                <span className="ml-auto rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                  Unsaved
+                </span>
+              )}
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">Goal type</label>
+                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
+                  Goal type
+                </label>
                 <select
                   name="goal"
                   value={form.goal}
@@ -201,39 +315,50 @@ export default function Settings() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-[11px] font-medium text-gray-500">
-                    Daily calorie goal — <span className="text-brand-600 font-semibold">{form.dailyCalorieGoal} kcal</span>
+                    Daily calorie goal —{" "}
+                    <span className="text-brand-600 font-semibold">
+                      {form.dailyCalorieGoal} kcal
+                    </span>
                   </label>
 
                   {suggestLoading && (
                     <span className="text-[10.5px] text-gray-400 flex items-center gap-1">
-                      <Loader2 size={10} className="animate-spin" /> Calculating...
+                      <Loader2 size={10} className="animate-spin" />{" "}
+                      Calculating...
                     </span>
                   )}
 
-                  {!suggestLoading && suggested && suggested !== Number(form.dailyCalorieGoal) && (
-                    <button
-                      onClick={applySuggestion}
-                      className="text-[10.5px] font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
-                    >
-                      <Sparkles size={11} /> Use suggested {suggested} kcal
-                    </button>
-                  )}
+                  {!suggestLoading &&
+                    suggested &&
+                    suggested !== Number(form.dailyCalorieGoal) && (
+                      <button
+                        onClick={applySuggestion}
+                        className="text-[10.5px] font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
+                      >
+                        <Sparkles size={11} /> Use suggested {suggested} kcal
+                      </button>
+                    )}
                 </div>
 
                 <input
-                  type="range" name="dailyCalorieGoal"
-                  min="1200" max="4000" step="50"
+                  type="range"
+                  name="dailyCalorieGoal"
+                  min="1200"
+                  max="4000"
+                  step="50"
                   value={form.dailyCalorieGoal}
                   onChange={handleChange}
                   className="w-full accent-brand-400"
                 />
                 <div className="flex justify-between text-[10.5px] text-gray-400 mt-1">
-                  <span>1200</span><span>4000</span>
+                  <span>1200</span>
+                  <span>4000</span>
                 </div>
 
                 {!suggested && !suggestLoading && (
                   <p className="text-[10.5px] text-gray-400 mt-2">
-                    Fill in age, gender, height, and weight above to get a suggested calorie goal.
+                    Fill in age, gender, height, and weight above to get a
+                    suggested calorie goal.
                   </p>
                 )}
               </div>
@@ -244,44 +369,78 @@ export default function Settings() {
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
               <Bell size={14} className="text-gray-400" />
-              <p className="text-[13px] font-semibold text-gray-800">Notifications</p>
+              <p className="text-[13px] font-semibold text-gray-800">
+                Notifications
+              </p>
             </div>
             <div className="p-4 space-y-3">
               {[
-                { label: 'Meal logging reminders', sub: 'Get reminded to log breakfast, lunch, and dinner' },
-                { label: 'Weekly report ready', sub: 'Notification when your weekly summary is available' },
-                { label: 'Goal milestones', sub: 'Celebrate when you hit your targets' },
+                {
+                  label: "Meal logging reminders",
+                  sub: "Get reminded to log breakfast, lunch, and dinner",
+                },
+                {
+                  label: "Weekly report ready",
+                  sub: "Notification when your weekly summary is available",
+                },
+                {
+                  label: "Goal milestones",
+                  sub: "Celebrate when you hit your targets",
+                },
               ].map((n, i) => (
                 <div key={i} className="flex items-center justify-between py-1">
                   <div>
-                    <p className="text-[13px] font-medium text-gray-800">{n.label}</p>
+                    <p className="text-[13px] font-medium text-gray-800">
+                      {n.label}
+                    </p>
                     <p className="text-[11px] text-gray-400">{n.sub}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-not-allowed opacity-60">
-                    <input type="checkbox" defaultChecked={i < 2} className="sr-only peer" disabled />
+                    <input
+                      type="checkbox"
+                      defaultChecked={i < 2}
+                      className="sr-only peer"
+                      disabled
+                    />
                     <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-brand-400 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
                   </label>
                 </div>
               ))}
-              <p className="text-[10.5px] text-gray-400">Notification preferences are coming soon.</p>
+              <p className="text-[10.5px] text-gray-400">
+                Notification preferences are coming soon.
+              </p>
             </div>
           </div>
 
           {/* Save / danger */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-brand-400 text-white text-[13px] font-medium px-6 py-2.5 rounded-xl hover:bg-brand-600 transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save changes'}
-            </button>
-            <button className="flex items-center gap-1.5 text-[12.5px] text-red-400 hover:text-red-600 transition-colors">
-              <Trash2 size={13} /> Delete account
-            </button>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleSave}
+                disabled={saving || !hasUnsavedChanges}
+                className={
+                  "text-[13px] font-semibold px-6 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed " +
+                  (hasUnsavedChanges
+                    ? "bg-amber-500 text-white ring-4 ring-amber-100 shadow-md hover:bg-amber-600"
+                    : "bg-brand-400 text-white hover:bg-brand-600")
+                }
+              >
+                {saving
+                  ? "Saving..."
+                  : saved
+                    ? "Saved ✓"
+                    : hasUnsavedChanges
+                      ? "Save changes •"
+                      : "Save changes"}
+              </button>
+
+              <button className="flex items-center gap-1.5 text-[12.5px] text-red-400 hover:text-red-600 transition-colors">
+                <Trash2 size={13} /> Delete account
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

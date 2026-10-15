@@ -5,13 +5,13 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 
 const dashboardService = require("./dashboard.service");
+const { validateOptionalDate } = require("../../utils/dateValidation");
 
 router.get("/today", auth, async (req, res, next) => {
   try {
-    const summary = await dashboardService.getTodaySummary(
-      req.user.id,
-      req.query.date,
-    );
+    const date = validateOptionalDate(req.query.date);
+
+    const summary = await dashboardService.getTodaySummary(req.user.id, date);
     res.json({ success: true, data: summary });
   } catch (error) {
     next(error);

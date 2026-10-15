@@ -65,7 +65,11 @@ async function getRecentMeals(userId, date) {
     SELECT id, meal_type, meal_text, total_calories, total_protein, total_carbs, total_fat, created_at
     FROM meals
     WHERE user_id = $1
-    AND DATE(created_at) = COALESCE($2::date, CURRENT_DATE)
+    AND (created_at AT TIME ZONE 'Asia/Kolkata')::date =
+    COALESCE(
+      $2::date,
+      (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+    )
     ORDER BY created_at DESC
     `,
     [userId, date || null],
@@ -79,7 +83,8 @@ async function deleteMeal(mealId, userId) {
     DELETE FROM meals
     WHERE id = $1
     AND user_id = $2
-    AND DATE(created_at) = CURRENT_DATE
+    AND (created_at AT TIME ZONE 'Asia/Kolkata')::date =
+    (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
     RETURNING *
     `,
     [mealId, userId],

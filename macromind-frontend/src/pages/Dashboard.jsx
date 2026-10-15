@@ -1,5 +1,10 @@
-import { getRecentMeals, analyzeMeal, deleteMeal } from "../api/mealApi";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  getRecentMeals,
+  analyzeMeal,
+  saveMeal,
+  deleteMeal,
+} from "../api/mealApi";
 import { getTodayDashboard, getWeekDashboard } from "../api/dashboardApi";
 import DateDropdown from "../components/DateDropdown";
 import {
@@ -11,34 +16,28 @@ import {
   Coffee,
   Moon,
   Apple,
-  Plus,
 } from "lucide-react";
 import Topbar from "../components/Topbar";
 import MacroCard from "../components/MacroCard";
 import MealCard from "../components/MealCard";
-import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
-import WeeklyMiniChart from "../components/WeeklyMiniChart";
 
-function toDateOnly(d) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+function toDateOnly(value) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
-function toISODate(d) {
-  const x = toDateOnly(d);
-  const y = x.getFullYear();
-  const m = String(x.getMonth() + 1).padStart(2, "0");
-  const day = String(x.getDate()).padStart(2, "0");
+function toISODate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-  return `${y}-${m}-${day}`;
+  return `${year}-${month}-${day}`;
 }
 
 export default function Dashboard() {
   usePageTitle("Dashboard");
-
-  const { user } = useAuth();
 
   const [todayData, setTodayData] = useState(null);
   const [recentMeals, setRecentMeals] = useState([]);
@@ -47,56 +46,150 @@ export default function Dashboard() {
     toDateOnly(new Date()),
   );
 
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
+
   const [showModal, setShowModal] = useState(false);
   const [mealType, setMealType] = useState("breakfast");
   const [mealText, setMealText] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Prevent an older API response from overwriting a newer date selection.
+  const requestId = useRef(0);
+
+  const realToday = toDateOnly(new Date());
+
+  const isToday = toISODate(selectedDate) === toISODate(realToday);
+
+  const dateStr = selectedDate.toLocaleDateString("en-IN", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year:
+      selectedDate.getFullYear() !== realToday.getFullYear()
+        ? "numeric"
+        : undefined,
+  });
+
+  // All date-dependent dashboard data is fetched together.
+  async function loadDashboard(date = selectedDate) {
+    const currentRequestId = ++requestId.current;
+
+    setDashboardLoading(true);
+    setDashboardError("");
+
+    try {
+      const isoDate = toISODate(date);
+
+      const [dashboardResponse, mealsResponse] = await Promise.all([
+        getTodayDashboard(isoDate),
+        getRecentMeals(isoDate),
+      ]);
+
+      // Ignore responses from previous date selections.
+      if (currentRequestId !== requestId.current) {
+        return;
+      }
+
+      setTodayData(dashboardResponse.data);
+      setRecentMeals(mealsResponse.data ?? []);
+    } catch (error) {
+      if (currentRequestId !== requestId.current) {
+        return;
+      }
+
+      console.error("Failed to load dashboard:", error);
+
+      setDashboardError(
+        error.response?.data?.message ||
+          "Unable to load this day's dashboard. Please try again.",
+      );
+    } finally {
+      if (currentRequestId === requestId.current) {
+        setDashboardLoading(false);
+      }
+    }
+  }
+
+  // Fetch whenever the selected calendar date changes.
+  useEffect(() => {
+    loadDashboard(selectedDate);
+  }, [selectedDate]);
+
+  // Group the selected day's meals by meal type.
   const breakfastMeals = recentMeals.filter(
     (meal) => meal.meal_type === "breakfast",
   );
 
   const lunchMeals = recentMeals.filter((meal) => meal.meal_type === "lunch");
 
-  const snackMeals = recentMeals.filter((meal) => meal.meal_type === "snack");
-
   const dinnerMeals = recentMeals.filter((meal) => meal.meal_type === "dinner");
 
-  const consumed = todayData?.consumed?.calories || 0;
-  const goal = todayData?.goals?.calories || 2400;
+  const snackMeals = recentMeals.filter((meal) => meal.meal_type === "snack");
 
-  async function loadDashboard(date = selectedDate) {
-    try {
-      const iso = toISODate(date);
+  const consumed = todayData?.consumed ?? {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+  };
 
-      const today = await getTodayDashboard(iso);
-      const meals = await getRecentMeals(iso);
+  const goals = todayData?.goals ?? {
+    calories: 2400,
+    protein: 150,
+    carbs: 280,
+    fat: 80,
+  };
 
-      setRecentMeals(meals.data);
-      setTodayData(today.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // The week strip follows the week containing the selected date.
+  // Sunday is the first day of the week.
+  const selectedWeekStart = toDateOnly(selectedDate);
 
-  useEffect(() => {
-    loadDashboard(selectedDate);
-  }, [selectedDate]);
+  selectedWeekStart.setDate(
+    selectedWeekStart.getDate() - selectedWeekStart.getDay(),
+  );
 
+  const week = [...Array(7)].map((_, index) => {
+    const date = new Date(selectedWeekStart);
+
+    date.setDate(selectedWeekStart.getDate() + index);
+
+    const dateOnly = toDateOnly(date);
+    const isoDate = toISODate(dateOnly);
+
+    return {
+      day: date.toLocaleDateString("en-US", {
+        weekday: "short",
+      }),
+      date: date.getDate(),
+      fullDate: dateOnly,
+      isFuture: isoDate > toISODate(realToday),
+      isSelected: isoDate === toISODate(selectedDate),
+    };
+  });
+
+  // Analyze and save the meal before refreshing the selected day.
   async function handleAddMeal() {
     if (!mealText.trim()) return;
 
     try {
       setLoading(true);
 
-      await analyzeMeal(mealType, mealText);
-      await loadDashboard();
+      const analysisResponse = await analyzeMeal(mealText);
+
+      await saveMeal({
+        mealType,
+        mealText: mealText.trim(),
+        analysis: analysisResponse.data,
+      });
+
+      await loadDashboard(selectedDate);
 
       setMealText("");
       setMealType("breakfast");
       setShowModal(false);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to add meal:", error);
 
       alert(error.response?.data?.message || "Failed to add meal");
     } finally {
@@ -107,278 +200,215 @@ export default function Dashboard() {
   async function handleDeleteMeal(mealId) {
     try {
       await deleteMeal(mealId);
-      await loadDashboard();
+      await loadDashboard(selectedDate);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to delete meal:", error);
+
       alert(error.response?.data?.message || "Failed to delete meal");
     }
   }
 
-  const realToday = toDateOnly(new Date());
-  const isToday = toDateOnly(selectedDate).getTime() === realToday.getTime();
-
-  const dateStr = selectedDate.toLocaleDateString("en-IN", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
-  const week = [...Array(7)].map((_, i) => {
-    const date = new Date(realToday);
-
-    date.setDate(realToday.getDate() - realToday.getDay() + i);
-
-    const dateOnly = toDateOnly(date);
-
+  function mapMeal(meal) {
     return {
-      day: date.toLocaleDateString("en-US", {
-        weekday: "short",
-      }),
-
-      date: date.getDate(),
-
-      fullDate: dateOnly,
-
-      isFuture: dateOnly.getTime() > realToday.getTime(),
-
-      isSelected: dateOnly.getTime() === toDateOnly(selectedDate).getTime(),
+      id: meal.id,
+      name: meal.meal_text,
+      calories: Number(meal.total_calories),
+      carbs: Number(meal.total_carbs),
+      protein: Number(meal.total_protein),
+      fat: Number(meal.total_fat),
     };
-  });
+  }
 
-  const [weekChartData, setWeekChartData] = useState([]);
+  function getMealTotal(meals) {
+    return meals.reduce(
+      (sum, meal) => sum + Number(meal.total_calories || 0),
+      0,
+    );
+  }
 
-  useEffect(() => {
-    async function loadWeekChart() {
-      try {
-        const res = await getWeekDashboard();
-        const byDate = {};
-        res.data.forEach((d) => {
-          byDate[new Date(d.date).toDateString()] = d;
-        });
-
-        const merged = week.map((w) => {
-          const entry = byDate[w.fullDate.toDateString()];
-          return {
-            day: w.day,
-            fullDate: w.fullDate,
-            calories: entry ? Number(entry.calories) : 0,
-          };
-        });
-
-        setWeekChartData(merged);
-      } catch (error) {
-        console.error("Failed to load week chart:", error);
-      }
-    }
-
-    loadWeekChart();
-  }, []);
+  const mealHeading = isToday
+    ? "Today's Meals"
+    : `Meals for ${selectedDate.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })}`;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* =====================================================
-          FIXED TOPBAR
-          ===================================================== */}
       <Topbar title="Dashboard" subtitle="Daily Overview" />
 
-      {/* =====================================================
-          SINGLE DASHBOARD SCROLL CONTAINER
-          ===================================================== */}
+      {/* Single dashboard scroll container */}
       <div className="flex-1 overflow-y-auto">
-        {/* ===================================================
-            DATE + WEEK SECTION
-
-            This stays visually pinned while scrolling.
-            Content below has a higher z-index and passes
-            over this section.
-            =================================================== */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5">
-          {/* Today dropdown */}
+        {/* Date selector and week strip */}
+        <div className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-5">
           <div className="mb-5">
-            <DateDropdown dateStr={dateStr} />
+            <DateDropdown
+              selectedDate={selectedDate}
+              dateStr={dateStr}
+              onChange={setSelectedDate}
+            />
           </div>
 
-          {/* Week selector */}
           <div className="bg-white rounded-2xl border border-gray-100 p-3 inline-flex gap-2 shadow-sm">
-            {week.map((d) => (
+            {week.map((day) => (
               <button
-                key={d.day}
-                disabled={d.isFuture}
-                onClick={() => setSelectedDate(d.fullDate)}
+                key={toISODate(day.fullDate)}
+                type="button"
+                disabled={day.isFuture}
+                onClick={() => setSelectedDate(day.fullDate)}
+                aria-pressed={day.isSelected}
                 className={`flex flex-col items-center justify-center rounded-xl px-4 py-2 transition-all ${
-                  d.isFuture
-                    ? "opacity-40 cursor-not-allowed"
-                    : d.isSelected
+                  day.isFuture
+                    ? "opacity-50 cursor-not-allowed"
+                    : day.isSelected
                       ? "bg-brand-400 text-white"
                       : "hover:bg-gray-50"
                 }`}
               >
                 <span
                   className={`text-[11px] ${
-                    d.isSelected && !d.isFuture
+                    day.isSelected && !day.isFuture
                       ? "text-white/80"
                       : "text-gray-400"
                   }`}
                 >
-                  {d.day}
+                  {day.day}
                 </span>
 
-                <span className="text-lg font-semibold mt-1">{d.date}</span>
+                <span className="text-lg font-semibold mt-1">{day.date}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* ===================================================
-            SCROLLING CONTENT
+        {/* Scrolling dashboard content */}
+        <div className="relative z-0 bg-gray-50 px-5 pb-8">
+          {dashboardError && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
+            >
+              <p>{dashboardError}</p>
 
-            z-20 is intentionally higher than the sticky
-            date section's z-10 so this content passes
-            OVER the week section while scrolling.
-            =================================================== */}
-        <div className="relative z-20 bg-gray-50 px-5 pb-8">
-          {/* =================================================
-              MACRO SUMMARY
-              ================================================= */}
-          <div className="grid grid-cols-4 gap-3 mb-8 pt-5">
+              <button
+                type="button"
+                onClick={() => loadDashboard(selectedDate)}
+                className="mt-2 font-medium underline"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {/* Nutrient summary */}
+          <div
+            className={`grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8 pt-5 ${
+              dashboardLoading ? "opacity-70" : ""
+            }`}
+            aria-busy={dashboardLoading}
+          >
             <MacroCard
               label="Calories"
-              value={consumed}
+              value={consumed.calories}
               unit="kcal"
-              goal={goal}
+              goal={goals.calories}
               color="brand"
               icon={Flame}
             />
 
             <MacroCard
               label="Protein"
-              value={todayData?.consumed?.protein || 0}
+              value={consumed.protein}
               unit="g"
-              goal={todayData?.goals?.protein || 150}
+              goal={goals.protein}
               color="violet"
               icon={Beef}
             />
 
             <MacroCard
               label="Carbs"
-              value={todayData?.consumed?.carbs || 0}
+              value={consumed.carbs}
               unit="g"
-              goal={todayData?.goals?.carbs || 280}
+              goal={goals.carbs}
               color="blue"
               icon={Wheat}
             />
 
             <MacroCard
               label="Fat"
-              value={todayData?.consumed?.fat || 0}
+              value={consumed.fat}
               unit="g"
-              goal={todayData?.goals?.fat || 80}
+              goal={goals.fat}
               color="amber"
               icon={Droplet}
             />
           </div>
 
-          {/* =================================================
-              TODAY'S MEALS
-              ================================================= */}
+          {/* Selected day's meals */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Today's Meals
+                  {mealHeading}
                 </h2>
 
                 <p className="text-sm text-gray-400">
-                  Meals you've logged today
+                  {isToday
+                    ? "Meals you've logged today"
+                    : "Meals you've logged on this date"}
                 </p>
               </div>
 
-              {/* add meal button */}
-              {/* <button
-                onClick={() =>
-                  setShowModal(true)
-                }
-                className="flex items-center gap-1.5 text-[12.5px] font-medium text-brand-600 hover:text-brand-700 transition-colors"
-              >
-                <Plus size={14} />
-                Add meal
-              </button> */}
+              {/*
+                The Add Meal button remains disabled in the UI,
+                as in the existing dashboard design.
+                handleAddMeal is wired to the analyze-and-save API
+                flow if you enable the modal later.
+              */}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 items-start">
-              {/* Breakfast */}
+            {dashboardLoading && (
+              <p role="status" className="mb-4 text-sm text-gray-500">
+                Loading meals and nutrients...
+              </p>
+            )}
+
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 gap-4 items-start ${
+                dashboardLoading ? "opacity-70" : ""
+              }`}
+              aria-busy={dashboardLoading}
+            >
               <MealCard
                 title="Breakfast"
                 icon={Coffee}
-                items={breakfastMeals.map((meal) => ({
-                  id: meal.id,
-                  name: meal.meal_text,
-                  calories: Number(meal.total_calories),
-                  carbs: Number(meal.total_carbs),
-                  protein: Number(meal.total_protein),
-                  fat: Number(meal.total_fat),
-                }))}
-                totalCal={breakfastMeals.reduce(
-                  (sum, meal) => sum + Number(meal.total_calories),
-                  0,
-                )}
+                items={breakfastMeals.map(mapMeal)}
+                totalCal={getMealTotal(breakfastMeals)}
                 onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
-              {/* Lunch */}
               <MealCard
                 title="Lunch"
                 icon={Sun}
-                items={lunchMeals.map((meal) => ({
-                  id: meal.id,
-                  name: meal.meal_text,
-                  calories: Number(meal.total_calories),
-                  carbs: Number(meal.total_carbs),
-                  protein: Number(meal.total_protein),
-                  fat: Number(meal.total_fat),
-                }))}
-                totalCal={lunchMeals.reduce(
-                  (sum, meal) => sum + Number(meal.total_calories),
-                  0,
-                )}
+                items={lunchMeals.map(mapMeal)}
+                totalCal={getMealTotal(lunchMeals)}
                 onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
-              {/* Dinner */}
               <MealCard
                 title="Dinner"
                 icon={Moon}
-                items={dinnerMeals.map((meal) => ({
-                  id: meal.id,
-                  name: meal.meal_text,
-                  calories: Number(meal.total_calories),
-                  carbs: Number(meal.total_carbs),
-                  protein: Number(meal.total_protein),
-                  fat: Number(meal.total_fat),
-                }))}
-                totalCal={dinnerMeals.reduce(
-                  (sum, meal) => sum + Number(meal.total_calories),
-                  0,
-                )}
+                items={dinnerMeals.map(mapMeal)}
+                totalCal={getMealTotal(dinnerMeals)}
                 onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
 
-              {/* Snacks */}
               <MealCard
                 title="Snacks"
                 icon={Apple}
-                items={snackMeals.map((meal) => ({
-                  id: meal.id,
-                  name: meal.meal_text,
-                  calories: Number(meal.total_calories),
-                  carbs: Number(meal.total_carbs),
-                  protein: Number(meal.total_protein),
-                  fat: Number(meal.total_fat),
-                }))}
-                totalCal={snackMeals.reduce(
-                  (sum, meal) => sum + Number(meal.total_calories),
-                  0,
-                )}
+                items={snackMeals.map(mapMeal)}
+                totalCal={getMealTotal(snackMeals)}
                 onDeleteItem={isToday ? handleDeleteMeal : undefined}
               />
             </div>
@@ -386,62 +416,56 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* =====================================================
-          ADD MEAL MODAL
-          ===================================================== */}
+      {/* Existing Add Meal modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Add Meal</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+            <h2 className="mb-4 text-lg font-semibold">Add Meal</h2>
 
             <div className="space-y-4">
-              {/* Meal type */}
               <div>
-                <label className="block text-sm mb-1">Meal Type</label>
+                <label className="mb-1 block text-sm">Meal Type</label>
 
                 <select
                   value={mealType}
-                  onChange={(e) => setMealType(e.target.value)}
-                  className="w-full border rounded-xl px-3 py-2"
+                  onChange={(event) => setMealType(event.target.value)}
+                  className="w-full rounded-xl border px-3 py-2"
                 >
                   <option value="breakfast">Breakfast</option>
-
                   <option value="lunch">Lunch</option>
-
                   <option value="dinner">Dinner</option>
-
                   <option value="snack">Snack</option>
                 </select>
               </div>
 
-              {/* Food description */}
               <div>
-                <label className="block text-sm mb-1">Food Description</label>
+                <label className="mb-1 block text-sm">Food Description</label>
 
                 <textarea
                   value={mealText}
-                  onChange={(e) => setMealText(e.target.value)}
+                  onChange={(event) => setMealText(event.target.value)}
                   rows={4}
                   placeholder="2 idlis and sambar"
-                  className="w-full border rounded-xl px-3 py-2"
+                  className="w-full rounded-xl border px-3 py-2"
                 />
               </div>
 
-              {/* Actions */}
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 border rounded-xl py-2"
+                  className="flex-1 rounded-xl border py-2"
                 >
                   Cancel
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleAddMeal}
-                  disabled={loading}
-                  className="flex-1 bg-brand-400 text-white rounded-xl py-2"
+                  disabled={loading || !mealText.trim()}
+                  className="flex-1 rounded-xl bg-brand-400 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? "Analyzing..." : "Analyze Meal"}
+                  {loading ? "Saving..." : "Analyze & Save"}
                 </button>
               </div>
             </div>

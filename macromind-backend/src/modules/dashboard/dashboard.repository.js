@@ -11,7 +11,11 @@ async function getTodaySummary(userId, date) {
       COUNT(*) AS meal_count
     FROM meals
     WHERE user_id = $1
-    AND DATE(created_at) = COALESCE($2::date, CURRENT_DATE)
+    AND (created_at AT TIME ZONE 'Asia/Kolkata')::date =
+    COALESCE(
+      $2::date,
+      (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+    )
     `,
     [userId, date || null],
   );
