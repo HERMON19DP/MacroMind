@@ -437,7 +437,7 @@ function Hero() {
 }
 
 export default function Landing() {
-  usePageTitle()
+  usePageTitle('Home')
   const { isAuthenticated } = useAuth()
   if (isAuthenticated) return <Navigate to="/overview" replace />
   
