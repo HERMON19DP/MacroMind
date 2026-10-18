@@ -11,6 +11,7 @@ import Favorites from './pages/Favorites'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import BugReport from './pages/BugReport'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             {/* <Route path="/water" element={<Water />} /> water page is diabled for now */}
             {/* <Route path="/favorites" element={<Favorites />} /> favorites page is disabled for now */}
             <Route path="/settings" element={<Settings />} />
+            <Route path="/report-issues" element={<BugReport />} />
           </Route>
         </Routes>
       </BrowserRouter>

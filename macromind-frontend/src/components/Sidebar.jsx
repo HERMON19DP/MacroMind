@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Leaf,
+  Bug,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "./ConfirmDialog";
@@ -81,6 +82,22 @@ export default function Sidebar() {
             >
               <Settings size={16} />
               Settings
+            </NavLink>
+          </div>
+
+          <div className="mt-1">
+            <NavLink
+              to="/report-issues"
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
+                  isActive
+                    ? "bg-brand-50 text-brand-600"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                }`
+              }
+            >
+              <Bug size={16} />
+              Report Bug / Issues
             </NavLink>
           </div>
         </nav>

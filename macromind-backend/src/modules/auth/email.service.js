@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+const dns = require("node:dns");
 let transporter;
 
 function getTransporter() {
@@ -11,10 +11,20 @@ function getTransporter() {
     throw new Error("Email SMTP configuration is missing");
   }
 
+  const port = Number(SMTP_PORT);
+
   transporter = nodemailer.createTransport({
     host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
+    port,
+    secure: port === 465,
+
+    // Use the operating system's DNS lookup mechanism.
+    lookup: dns.lookup,
+
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASS,
@@ -51,4 +61,37 @@ async function sendVerificationOtp(email, otp) {
   });
 }
 
-module.exports = { sendVerificationOtp };
+async function sendBugReportEmail(report) {
+  const mailer = getTransporter();
+
+  const attachments = (report.screenshots || []).map((file) => ({
+    filename: file.filename,
+    content: file.file_data,
+    contentType: file.mime_type,
+  }));
+
+  await mailer.sendMail({
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    to: process.env.BUG_REPORT_TO || process.env.SMTP_USER,
+    subject: `[MacroMind Bug Report] ${report.title}`,
+    text: [
+      `Report ID: ${report.id}`,
+      `User ID: ${report.user_id}`,
+      `Submitted: ${report.created_at}`,
+      "",
+      "Title:",
+      report.title,
+      "",
+      "Description:",
+      report.description,
+      "",
+      `Screenshots attached: ${attachments.length}`,
+    ].join("\n"),
+    attachments,
+  });
+}
+
+module.exports = {
+  sendVerificationOtp,
+  sendBugReportEmail,
+};
