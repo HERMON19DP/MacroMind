@@ -18,7 +18,7 @@ const navItems = [
   { label: "AI Chat", to: "/chat", icon: MessageSquare },
   { label: "Reports", to: "/reports", icon: BarChart2 },
   { label: "Weight", to: "/weight", icon: Scale },
-  { label: "Water", to: "/water", icon: Droplets },
+  // { label: "Water", to: "/water", icon: Droplets }, is disabled for now
   // Favorites page is disabled for now.
 ];
 

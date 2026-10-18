@@ -101,7 +101,7 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="relative my-4">
+          {/* <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-100" />
             </div>
@@ -130,7 +130,7 @@ export default function Login() {
               />
             </svg>
             Continue with Google
-          </button>
+          </button> */}
         </div>
 
         <p className="text-center text-[12px] text-gray-400 mt-4">

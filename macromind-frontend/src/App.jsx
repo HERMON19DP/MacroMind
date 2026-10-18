@@ -25,7 +25,7 @@ export default function App() {
             <Route path="/chat" element={<Chat />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/weight" element={<Weight />} />
-            <Route path="/water" element={<Water />} />
+            {/* <Route path="/water" element={<Water />} /> water page is diabled for now */}
             {/* <Route path="/favorites" element={<Favorites />} /> favorites page is disabled for now */}
             <Route path="/settings" element={<Settings />} />
           </Route>
