@@ -2,11 +2,37 @@ const authService = require("./auth.service");
 
 async function signup(req, res, next) {
   try {
-    const user = await authService.signup(req.body);
+    const result = await authService.signup(req.body);
 
-    res.status(201).json({
+    res.status(202).json({
       success: true,
-      data: user,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function verifyOtp(req, res, next) {
+  try {
+    const result = await authService.verifyOtp(req.body);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function resendOtp(req, res, next) {
+  try {
+    const result = await authService.resendOtp(req.body);
+
+    res.json({
+      success: true,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -15,11 +41,11 @@ async function signup(req, res, next) {
 
 async function login(req, res, next) {
   try {
-    const user = await authService.login(req.body);
+    const result = await authService.login(req.body);
 
     res.json({
       success: true,
-      data: user,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -28,9 +54,7 @@ async function login(req, res, next) {
 
 async function refresh(req, res, next) {
   try {
-    const { refreshToken } = req.body;
-
-    const accessToken = authService.refreshAccessToken(refreshToken);
+    const accessToken = authService.refreshAccessToken(req.body.refreshToken);
 
     res.json({
       success: true,
@@ -43,6 +67,8 @@ async function refresh(req, res, next) {
 
 module.exports = {
   signup,
+  verifyOtp,
+  resendOtp,
   login,
   refresh,
 };
