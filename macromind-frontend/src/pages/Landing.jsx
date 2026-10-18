@@ -21,7 +21,8 @@ import BenefitsFAQ from "../components/landing/BenefitsFAQ";
 import CTAFooter from "../components/landing/CTAFooter";
 import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
-import { usePageTitle } from '../hooks/usePageTitle'
+import { usePageTitle } from "../hooks/usePageTitle";
+import { usePageDescription } from "../hooks/usePageDescription";
 
 function scrollToSection(id) {
   const el = document.getElementById(id);
@@ -437,10 +438,14 @@ function Hero() {
 }
 
 export default function Landing() {
-  usePageTitle('Home')
-  const { isAuthenticated } = useAuth()
-  if (isAuthenticated) return <Navigate to="/overview" replace />
-  
+  usePageTitle("Home");
+  usePageDescription(
+    "Track calories, monitor protein and other nutrients, and understand your meals with MacroMind AI-powered nutrition analysis.",
+  );
+
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) return <Navigate to="/overview" replace />;
+
   return (
     <div className="bg-white">
       <Navbar />

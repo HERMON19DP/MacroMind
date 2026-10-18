@@ -1,17 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import AppLayout from './components/AppLayout'
-import Landing from './pages/Landing'
-import Dashboard from './pages/Dashboard'
-import Chat from './pages/Chat'
-import Reports from './pages/Reports'
-import Weight from './pages/Weight'
-import Water from './pages/Water'
-import Favorites from './pages/Favorites'
-import Settings from './pages/Settings'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import BugReport from './pages/BugReport'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import AppLayout from "./components/AppLayout";
+import Landing from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
+import Reports from "./pages/Reports";
+import Weight from "./pages/Weight";
+import Water from "./pages/Water";
+import Favorites from "./pages/Favorites";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import BugReport from "./pages/BugReport";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -31,8 +32,9 @@ export default function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/report-issues" element={<BugReport />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-  )
+  );
 }

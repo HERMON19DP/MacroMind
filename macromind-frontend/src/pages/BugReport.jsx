@@ -254,7 +254,7 @@ export default function BugReport() {
                       >
                         <img
                           src={URL.createObjectURL(file)}
-                          alt={`Screenshot ${index + 1}`}
+                          alt="Preview of the attached bug report screenshot"
                           className="w-full h-28 object-cover"
                         />
 
