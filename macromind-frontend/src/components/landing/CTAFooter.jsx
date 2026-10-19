@@ -19,16 +19,17 @@ const FOOTER_COLUMNS = [
   {
     title: "Company",
     links: [
-      { label: "About", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About", id: "about" },
+      { label: "Contact", id: "contact" },
     ],
   },
+
   {
     title: "Resources",
     links: [
       { label: "FAQ", id: "faq" },
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
     ],
   },
 ];
@@ -98,6 +99,44 @@ export default function CTAFooter() {
         </div>
       </section>
 
+      <section
+        id="contact"
+        className="scroll-mt-20 border-t border-gray-100 bg-gray-50/70 py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+            Get in touch
+          </p>
+
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+            We're here to help
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-gray-500 sm:text-base">
+            Have a question about MacroMind, found a bug, or have an idea that
+            could make nutrition tracking better? We'd love to hear from you.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/report-issues"
+              className="inline-flex items-center justify-center rounded-xl bg-brand-400 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-600"
+            >
+              Report an issue
+            </Link>
+
+            <a
+              href="https://github.com/HERMON19DP/MacroMind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-14">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
@@ -149,15 +188,21 @@ export default function CTAFooter() {
               <p className="text-[12px] font-semibold text-gray-900 mb-3.5">
                 Social
               </p>
+
               <div className="flex flex-col gap-2.5">
                 <a
-                  href="#"
+                  href="https://github.com/HERMON19DP"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[13px] text-gray-500 hover:text-brand-600 transition-colors"
                 >
                   GitHub
                 </a>
+
                 <a
-                  href="#"
+                  href="https://www.linkedin.com/in/hermon-dp/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[13px] text-gray-500 hover:text-brand-600 transition-colors"
                 >
                   LinkedIn

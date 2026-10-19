@@ -369,7 +369,10 @@ function DashboardMockup() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
+    <section
+      id="about"
+      className="relative scroll-mt-20 overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28"
+    >
       <div
         aria-hidden
         className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full opacity-40 blur-3xl pointer-events-none"
