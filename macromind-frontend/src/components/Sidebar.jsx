@@ -46,7 +46,7 @@ export default function Sidebar() {
             <Leaf size={15} className="text-white" />
           </div>
           <span className="text-[15px] font-semibold text-gray-900 tracking-tight">
-            Journable
+            MacroMind
           </span>
         </div>
 
