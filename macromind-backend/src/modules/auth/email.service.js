@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-const dns = require("node:dns");
 let transporter;
 
 function getTransporter() {
@@ -17,9 +16,6 @@ function getTransporter() {
     host: SMTP_HOST,
     port,
     secure: port === 465,
-
-    // Use the operating system's DNS lookup mechanism.
-    lookup: dns.lookup,
 
     connectionTimeout: 15000,
     greetingTimeout: 15000,

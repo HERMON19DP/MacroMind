@@ -36,3 +36,8 @@ export async function deleteMeal(id) {
   const response = await api.delete(`/meals/${id}`);
   return response.data;
 }
+
+export async function getAnalysisQuota() {
+  const response = await api.get("/meals/analysis-quota");
+  return response.data;
+}
