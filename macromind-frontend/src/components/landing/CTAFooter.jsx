@@ -118,20 +118,13 @@ export default function CTAFooter() {
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/report-issues"
-              className="inline-flex items-center justify-center rounded-xl bg-brand-400 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-600"
-            >
-              Report an issue
-            </Link>
-
             <a
-              href="https://github.com/HERMON19DP/MacroMind"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=hermondevaprabhu400@gmail.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center justify-center rounded-xl bg-brand-400 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-600"
             >
-              View on GitHub
+              Contact us
             </a>
           </div>
         </div>

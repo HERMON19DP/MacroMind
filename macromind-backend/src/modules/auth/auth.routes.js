@@ -15,21 +15,58 @@ const signupLimiter = rateLimit({
   },
 });
 
-const otpLimiter = rateLimit({
+const otpVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
     success: false,
-    message: "Too many verification requests. Please try again later.",
+    message: "Too many verification attempts. Please try again later.",
+  },
+});
+
+const otpResendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many OTP requests. Please try again later.",
+  },
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many login attempts. Please try again later.",
+  },
+});
+
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many token refresh requests. Please try again later.",
   },
 });
 
 router.post("/signup", signupLimiter, authController.signup);
-router.post("/verify-otp", otpLimiter, authController.verifyOtp);
-router.post("/resend-otp", otpLimiter, authController.resendOtp);
-router.post("/login", authController.login);
-router.post("/refresh", authController.refresh);
+
+router.post("/verify-otp", otpVerificationLimiter, authController.verifyOtp);
+
+router.post("/resend-otp", otpResendLimiter, authController.resendOtp);
+
+router.post("/login", loginLimiter, authController.login);
+
+router.post("/refresh", refreshLimiter, authController.refresh);
 
 module.exports = router;

@@ -124,9 +124,17 @@ async function sendOtpForSignup(signup) {
   try {
     await emailService.sendVerificationOtp(signup.email, otp);
   } catch (error) {
+    console.error("OTP email delivery failed:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+    });
+
     await authRepository.deletePendingSignup(signup.email);
+
     throw createError(
-      "Unable to send the verification email. Check the email configuration and try again.",
+      "Unable to send the verification email. Check the backend logs.",
       503,
     );
   }
