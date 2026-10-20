@@ -45,9 +45,9 @@ router.put("/me", auth, profileUpdateLimiter, async (req, res, next) => {
 
 router.post("/suggested-calories", auth, async (req, res, next) => {
   try {
-    const { weight, height, age, gender, goal } = req.body;
+    const { weight, height, age, gender, goal, activityLevel, goalRateKgWeek } =
+      req.body;
 
-    // Load the user's saved preferences from their profile.
     const profile = await userService.getProfile(req.user.id);
 
     if (!profile) {
@@ -63,11 +63,13 @@ router.post("/suggested-calories", auth, async (req, res, next) => {
       age: Number(age),
       gender,
       goal,
-      activityLevel: profile.activity_level,
+      activityLevel: activityLevel || profile.activity_level,
       goalRateKgWeek:
-        profile.goal_rate_kg_week == null
-          ? undefined
-          : Number(profile.goal_rate_kg_week),
+        goalRateKgWeek == null || goalRateKgWeek === ""
+          ? profile.goal_rate_kg_week == null
+            ? undefined
+            : Number(profile.goal_rate_kg_week)
+          : Number(goalRateKgWeek),
     });
 
     if (suggestedCalories == null) {

@@ -19,6 +19,8 @@ export default function Settings() {
     targetWeight: "",
     goal: "Lose weight",
     dailyCalorieGoal: 2000,
+    activityLevel: "lightly_active",
+    goalRateKgWeek: "0.5",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,6 +47,11 @@ export default function Settings() {
           targetWeight: profile.target_weight_kg ?? "",
           goal: profile.goal_type || "Lose weight",
           dailyCalorieGoal: goals?.calorie_goal ?? 2000,
+          activityLevel: profile.activity_level || "lightly_active",
+          goalRateKgWeek:
+            profile.goal_rate_kg_week == null
+              ? "0.5"
+              : String(profile.goal_rate_kg_week),
         };
 
         setForm(loadedForm);
@@ -79,6 +86,11 @@ export default function Settings() {
           age: Number(age),
           gender,
           goal,
+          activityLevel: form.activityLevel,
+          goalRateKgWeek:
+            form.goal === "Maintain weight"
+              ? undefined
+              : Number(form.goalRateKgWeek),
         });
         setSuggested(res.suggestedCalories);
       } catch (error) {
@@ -90,7 +102,16 @@ export default function Settings() {
 
     return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.age, form.gender, form.height, form.weight, form.goal, loading]);
+  }, [
+    form.age,
+    form.gender,
+    form.height,
+    form.weight,
+    form.goal,
+    form.activityLevel,
+    form.goalRateKgWeek,
+    loading,
+  ]);
 
   const hasUnsavedChanges =
     initialForm !== null &&
@@ -105,6 +126,9 @@ export default function Settings() {
     "height",
     "weight",
     "targetWeight",
+    "goal",
+    "activityLevel",
+    "goalRateKgWeek",
   ];
 
   const profileHasChanges =
@@ -147,6 +171,9 @@ export default function Settings() {
         weight: form.weight ? Number(form.weight) : null,
         targetWeight: form.targetWeight ? Number(form.targetWeight) : null,
         goal: form.goal,
+        activityLevel: form.activityLevel,
+        goalRateKgWeek:
+          form.goal === "Maintain weight" ? null : Number(form.goalRateKgWeek),
       });
 
       await updateGoals({ calorieGoal: Number(form.dailyCalorieGoal) });
@@ -278,6 +305,42 @@ export default function Settings() {
                   <option value="female">Female</option>
                 </select>
               </div>
+
+              <div>
+                <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
+                  Activity level
+                </label>
+                <select
+                  name="activityLevel"
+                  value={form.activityLevel}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                >
+                  <option value="sedentary">Sedentary</option>
+                  <option value="lightly_active">Lightly active</option>
+                  <option value="moderately_active">Moderately active</option>
+                  <option value="very_active">Very active</option>
+                  <option value="extra_active">Extra active</option>
+                </select>
+              </div>
+
+              {form.goal !== "Maintain weight" && (
+                <div>
+                  <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
+                    Weekly {form.goal === "Gain weight" ? "gain" : "loss"} rate
+                  </label>
+                  <select
+                    name="goalRateKgWeek"
+                    value={form.goalRateKgWeek}
+                    onChange={handleChange}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                  >
+                    <option value="0.25">0.25 kg/week</option>
+                    <option value="0.5">0.5 kg/week</option>
+                    <option value="1">1 kg/week</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 

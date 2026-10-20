@@ -23,10 +23,16 @@ async function updateProfile(userId, data) {
       weight_kg = COALESCE($6, weight_kg),
       target_weight_kg = COALESCE($7, target_weight_kg),
       goal_type = COALESCE($8, goal_type),
+      activity_level = COALESCE($9, activity_level),
+      goal_rate_kg_week = CASE
+        WHEN COALESCE($8, goal_type) = 'Maintain weight' THEN NULL
+        ELSE COALESCE($10, goal_rate_kg_week)
+      END,
       updated_at = CURRENT_TIMESTAMP
      WHERE id = $1
      RETURNING id, email, name, age, gender, height_cm, weight_kg,
-               target_weight_kg, goal_type`,
+               target_weight_kg, goal_type, activity_level,
+               goal_rate_kg_week, target_date`,
     [
       userId,
       data.name,
@@ -36,6 +42,8 @@ async function updateProfile(userId, data) {
       data.weight,
       data.targetWeight,
       data.goal,
+      data.activityLevel,
+      data.goalRateKgWeek,
     ],
   );
 
