@@ -1,9 +1,20 @@
 const express = require("express");
-
 const auth = require("../../middleware/auth");
 const weightService = require("./weight.service");
+const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
+
+const weightLogLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many weight entries. Please try again later.",
+  },
+});
 
 router.get("/", auth, async (req, res, next) => {
   try {
@@ -19,7 +30,7 @@ router.get("/", auth, async (req, res, next) => {
   }
 });
 
-router.post("/", auth, async (req, res, next) => {
+router.post("/", auth, weightLogLimiter, async (req, res, next) => {
   try {
     const weight = Number(req.body.weight);
 

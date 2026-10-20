@@ -1,13 +1,25 @@
 const express = require("express");
-
 const auth = require("../../middleware/auth");
 const upload = require("./bugReport.upload");
 const bugReportService = require("./bugReport.service");
+const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
 
+const bugReportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many bug reports. Please try again later.",
+  },
+});
+
 router.post(
   "/",
+  bugReportLimiter,
   auth,
   (req, res, next) => {
     upload.array("screenshots", 3)(req, res, (error) => {
