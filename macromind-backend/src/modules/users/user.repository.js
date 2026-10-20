@@ -3,10 +3,11 @@ const pool = require("../../config/db");
 async function getById(userId) {
   const result = await pool.query(
     `SELECT id, email, name, age, gender, height_cm, weight_kg,
-            target_weight_kg, goal_type, created_at
-     FROM users
-     WHERE id = $1`,
-    [userId]
+        target_weight_kg, goal_type, activity_level,
+        goal_rate_kg_week, target_date, created_at
+ FROM users
+ WHERE id = $1`,
+    [userId],
   );
 
   return result.rows[0];
@@ -35,7 +36,7 @@ async function updateProfile(userId, data) {
       data.weight,
       data.targetWeight,
       data.goal,
-    ]
+    ],
   );
 
   return result.rows[0];
@@ -44,7 +45,7 @@ async function updateProfile(userId, data) {
 async function updateCurrentWeight(userId, weightKg) {
   await pool.query(
     `UPDATE users SET weight_kg = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-    [userId, weightKg]
+    [userId, weightKg],
   );
 }
 

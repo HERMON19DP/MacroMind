@@ -43,21 +43,48 @@ router.put("/me", auth, profileUpdateLimiter, async (req, res, next) => {
   }
 });
 
-router.post("/suggested-calories", auth, (req, res) => {
-  const { weight, height, age, gender, goal } = req.body;
+router.post("/suggested-calories", auth, async (req, res, next) => {
+  try {
+    const { weight, height, age, gender, goal } = req.body;
 
-  const suggestedCalories = calorieCalculator.calculateSuggestedCalories({
-    weight: Number(weight),
-    height: Number(height),
-    age: Number(age),
-    gender,
-    goal,
-  });
+    // Load the user's saved preferences from their profile.
+    const profile = await userService.getProfile(req.user.id);
 
-  res.json({
-    success: true,
-    suggestedCalories,
-  });
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "User profile not found",
+      });
+    }
+
+    const suggestedCalories = calorieCalculator.calculateSuggestedCalories({
+      weight: Number(weight),
+      height: Number(height),
+      age: Number(age),
+      gender,
+      goal,
+      activityLevel: profile.activity_level,
+      goalRateKgWeek:
+        profile.goal_rate_kg_week == null
+          ? undefined
+          : Number(profile.goal_rate_kg_week),
+    });
+
+    if (suggestedCalories == null) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Unable to calculate suggested calories from the provided profile",
+      });
+    }
+
+    res.json({
+      success: true,
+      suggestedCalories,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;
