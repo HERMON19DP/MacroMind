@@ -47,6 +47,11 @@ function createAuthResponse(user) {
       height_cm: user.height_cm,
       weight_kg: user.weight_kg,
       goal_type: user.goal_type,
+      target_weight_kg: user.target_weight_kg,
+      activity_level: user.activity_level,
+      goal_rate_kg_week: user.goal_rate_kg_week,
+      target_date: user.target_date,
+      gender: user.gender,
     },
     accessToken: generateAccessToken(user),
     refreshToken: generateRefreshToken(user),
@@ -76,6 +81,14 @@ function validateSignup(data) {
   const gender = String(data.gender ?? "")
     .trim()
     .toLowerCase();
+  const targetWeightKg = Number(data.targetWeightKg ?? data.targetWeight);
+  const activityLevel = String(data.activityLevel || "lightly_active").trim();
+  const goalRateKgWeek =
+    data.goalRateKgWeek == null || data.goalRateKgWeek === ""
+      ? null
+      : Number(data.goalRateKgWeek);
+
+  const isMaintain = goalType === "Maintain weight";
 
   if (!["male", "female"].includes(gender)) {
     throw createError("Select your gender");
@@ -109,7 +122,76 @@ function validateSignup(data) {
     throw createError("Select a valid health goal");
   }
 
-  return { email, name, password, age, gender, heightCm, weightKg, goalType };
+  const validActivityLevels = [
+    "sedentary",
+    "lightly_active",
+    "moderately_active",
+    "very_active",
+    "extra_active",
+  ];
+
+  if (!validActivityLevels.includes(activityLevel)) {
+    throw createError("Select a valid activity level");
+  }
+
+  let targetWeight = null;
+  let goalRate = null;
+
+  if (!isMaintain) {
+    if (
+      !Number.isFinite(targetWeightKg) ||
+      targetWeightKg < 10 ||
+      targetWeightKg > 500
+    ) {
+      throw createError("Enter a valid target weight between 10 and 500 kg");
+    }
+
+    if (
+      (goalType === "Gain weight" && targetWeightKg <= weightKg) ||
+      (goalType === "Lose weight" && targetWeightKg >= weightKg)
+    ) {
+      throw createError(
+        "Your target weight must be higher for weight gain and lower for weight loss",
+      );
+    }
+
+    if (![0.25, 0.5, 1].includes(goalRateKgWeek)) {
+      throw createError("Select a valid weekly weight-change rate");
+    }
+
+    targetWeight = targetWeightKg;
+    goalRate = goalRateKgWeek;
+  }
+
+  const targetDate =
+    targetWeight !== null
+      ? new Date(
+          Date.now() +
+            Math.ceil(Math.abs(targetWeight - weightKg) / goalRate) *
+              7 *
+              24 *
+              60 *
+              60 *
+              1000,
+        )
+          .toISOString()
+          .slice(0, 10)
+      : null;
+
+  return {
+    email,
+    name,
+    password,
+    age,
+    gender,
+    heightCm,
+    weightKg,
+    goalType,
+    targetWeightKg: targetWeight,
+    goalRateKgWeek: goalRate,
+    activityLevel,
+    targetDate,
+  };
 }
 
 async function sendOtpForSignup(signup) {
@@ -266,6 +348,10 @@ async function resendOtp(data) {
     heightCm: pending.height_cm,
     weightKg: pending.weight_kg,
     goalType: pending.goal_type,
+    targetWeightKg: pending.target_weight_kg,
+    activityLevel: pending.activity_level,
+    goalRateKgWeek: pending.goal_rate_kg_week,
+    targetDate: pending.target_date,
   });
 
   return {

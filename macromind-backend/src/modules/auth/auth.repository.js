@@ -1,5 +1,8 @@
 const pool = require("../../config/db");
-const { calculateSuggestedCalories } = require("../users/calorieCalculator");
+const {
+  calculateSuggestedCalories,
+  calculateSuggestedMacros,
+} = require("../users/calorieCalculator");
 
 async function createUser(user) {
   const query = `
@@ -50,41 +53,35 @@ async function findPendingSignup(email) {
 
 async function savePendingSignup(signup) {
   const query = `
-    INSERT INTO pending_signups (
-      email,
-      name,
-      password_hash,
-      age,
-      gender,
-      height_cm,
-      weight_kg,
-      goal_type,
-      otp_hash,
-      expires_at,
-      attempts,
-      last_sent_at
-    )
-    VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9,
-      NOW() + INTERVAL '10 minutes',
-      0,
-      NOW()
-    )
-    ON CONFLICT (email) DO UPDATE SET
-      name = EXCLUDED.name,
-      password_hash = EXCLUDED.password_hash,
-      age = EXCLUDED.age,
-      gender = EXCLUDED.gender,
-      height_cm = EXCLUDED.height_cm,
-      weight_kg = EXCLUDED.weight_kg,
-      goal_type = EXCLUDED.goal_type,
-      otp_hash = EXCLUDED.otp_hash,
-      expires_at = EXCLUDED.expires_at,
-      attempts = 0,
-      last_sent_at = NOW(),
-      verified_at = NULL
-    RETURNING email
-  `;
+  INSERT INTO pending_signups (
+    email, name, password_hash, age, gender,
+    height_cm, weight_kg, goal_type, target_weight_kg,
+    activity_level, goal_rate_kg_week, target_date,
+    otp_hash, expires_at, attempts, last_sent_at
+  )
+  VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+    $13, NOW() + INTERVAL '10 minutes', 0, NOW()
+  )
+  ON CONFLICT (email) DO UPDATE SET
+    name = EXCLUDED.name,
+    password_hash = EXCLUDED.password_hash,
+    age = EXCLUDED.age,
+    gender = EXCLUDED.gender,
+    height_cm = EXCLUDED.height_cm,
+    weight_kg = EXCLUDED.weight_kg,
+    goal_type = EXCLUDED.goal_type,
+    target_weight_kg = EXCLUDED.target_weight_kg,
+    activity_level = EXCLUDED.activity_level,
+    goal_rate_kg_week = EXCLUDED.goal_rate_kg_week,
+    target_date = EXCLUDED.target_date,
+    otp_hash = EXCLUDED.otp_hash,
+    expires_at = EXCLUDED.expires_at,
+    attempts = 0,
+    last_sent_at = NOW(),
+    verified_at = NULL
+  RETURNING email
+`;
 
   const values = [
     signup.email,
@@ -95,6 +92,10 @@ async function savePendingSignup(signup) {
     signup.heightCm,
     signup.weightKg,
     signup.goalType,
+    signup.targetWeightKg,
+    signup.activityLevel,
+    signup.goalRateKgWeek,
+    signup.targetDate,
     signup.otpHash,
   ];
 
@@ -156,18 +157,14 @@ async function completePendingSignup(email) {
 
     const userResult = await client.query(
       `INSERT INTO users (
-        email,
-        password_hash,
-        name,
-        age,
-        gender,
-        height_cm,
-        weight_kg,
-        goal_type,
-        email_verified
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-      RETURNING id, email, name, age, gender, height_cm, weight_kg, goal_type, created_at`,
+    email, password_hash, name, age, gender,
+    height_cm, weight_kg, goal_type, target_weight_kg,
+    activity_level, goal_rate_kg_week, target_date, email_verified
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, TRUE)
+  RETURNING id, email, name, age, gender, height_cm, weight_kg,
+    goal_type, target_weight_kg, activity_level,
+    goal_rate_kg_week, target_date, created_at`,
       [
         pending.email,
         pending.password_hash,
@@ -177,6 +174,10 @@ async function completePendingSignup(email) {
         pending.height_cm,
         pending.weight_kg,
         pending.goal_type,
+        pending.target_weight_kg,
+        pending.activity_level,
+        pending.goal_rate_kg_week,
+        pending.target_date,
       ],
     );
 
@@ -188,10 +189,24 @@ async function completePendingSignup(email) {
       age: Number(pending.age),
       gender: pending.gender,
       goal: pending.goal_type,
+      activityLevel: pending.activity_level,
+      goalRateKgWeek:
+        pending.goal_rate_kg_week == null
+          ? undefined
+          : Number(pending.goal_rate_kg_week),
     });
 
     if (calorieGoal == null) {
       throw new Error("Unable to calculate the user's calorie goal");
+    }
+
+    const macros = calculateSuggestedMacros({
+      weight: Number(pending.weight_kg),
+      calorieGoal,
+    });
+
+    if (!macros) {
+      throw new Error("Unable to calculate the user's macro goals");
     }
 
     await client.query(
@@ -203,7 +218,13 @@ async function completePendingSignup(email) {
     fat_goal
   )
   VALUES ($1, $2, $3, $4, $5)`,
-      [user.id, calorieGoal, 120, 250, 70],
+      [
+        user.id,
+        calorieGoal,
+        macros.proteinGoal,
+        macros.carbGoal,
+        macros.fatGoal,
+      ],
     );
 
     await client.query("DELETE FROM pending_signups WHERE email = $1", [email]);
