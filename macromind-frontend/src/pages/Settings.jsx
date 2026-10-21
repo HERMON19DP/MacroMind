@@ -48,10 +48,11 @@ export default function Settings() {
           goal: profile.goal_type || "Lose weight",
           dailyCalorieGoal: goals?.calorie_goal ?? 2000,
           activityLevel: profile.activity_level || "lightly_active",
+
           goalRateKgWeek:
             profile.goal_rate_kg_week == null
               ? "0.5"
-              : String(profile.goal_rate_kg_week),
+              : String(Number(profile.goal_rate_kg_week)),
         };
 
         setForm(loadedForm);
@@ -497,9 +498,9 @@ export default function Settings() {
                       : "Save changes"}
               </button>
 
-              <button className="flex items-center gap-1.5 text-[12.5px] text-red-400 hover:text-red-600 transition-colors">
+              {/* <button className="flex items-center gap-1.5 text-[12.5px] text-red-400 hover:text-red-600 transition-colors">
                 <Trash2 size={13} /> Delete account
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
