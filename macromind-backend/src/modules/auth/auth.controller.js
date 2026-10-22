@@ -65,10 +65,24 @@ async function refresh(req, res, next) {
   }
 }
 
+async function checkEmail(req, res, next) {
+  try {
+    const result = await authService.checkEmailAvailability(req.body);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   signup,
   verifyOtp,
   resendOtp,
   login,
   refresh,
+  checkEmail,
 };

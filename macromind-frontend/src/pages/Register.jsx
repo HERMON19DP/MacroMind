@@ -3,7 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { Leaf } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { signupUser, verifyOtp, resendOtp } from "../api/authApi";
+import {
+  signupUser,
+  verifyOtp,
+  resendOtp,
+  checkEmailAvailability,
+} from "../api/authApi";
 
 const ACTIVITY_LEVELS = [
   { value: "sedentary", label: "Sedentary — little exercise" },
@@ -34,6 +39,7 @@ export default function Register() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -250,6 +256,35 @@ export default function Register() {
     }
   };
 
+  const handleContinue = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    const email = form.email.trim().toLowerCase();
+
+    if (!email) {
+      setError("Enter your email address.");
+      return;
+    }
+
+    setCheckingEmail(true);
+
+    try {
+      await checkEmailAvailability(email);
+
+      set("email", email);
+      setStep(2);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Could not verify this email. Please try again.",
+      );
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
@@ -350,15 +385,7 @@ export default function Register() {
               </button>
             </form>
           ) : step === 1 ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setError("");
-                setMessage("");
-                setStep(2);
-              }}
-              className="space-y-3.5"
-            >
+            <form onSubmit={handleContinue} className="space-y-3.5">
               <p className="text-[12px] text-gray-400 mb-1">
                 Step 1 of 2 — account details
               </p>
@@ -368,7 +395,7 @@ export default function Register() {
                   label: "Full name",
                   key: "name",
                   type: "text",
-                  placeholder: "Arun Kumar",
+                  placeholder: "Peter P",
                 },
                 {
                   label: "Email",
@@ -407,9 +434,10 @@ export default function Register() {
 
               <button
                 type="submit"
-                className="w-full bg-brand-400 text-white font-medium text-[13.5px] py-2.5 rounded-xl hover:bg-brand-600 transition-colors mt-1"
+                disabled={checkingEmail}
+                className="w-full bg-brand-400 text-white font-medium text-[13.5px] py-2.5 rounded-xl hover:bg-brand-600 disabled:opacity-60 transition-colors mt-1"
               >
-                Continue
+                {checkingEmail ? "Checking email..." : "Continue"}
               </button>
             </form>
           ) : (

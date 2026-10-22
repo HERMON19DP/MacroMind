@@ -19,3 +19,8 @@ export async function loginUser(data) {
   const response = await api.post("/auth/login", data);
   return response.data;
 }
+
+export async function checkEmailAvailability(email) {
+  const response = await api.post("/auth/check-email", { email });
+  return response.data;
+}

@@ -9,8 +9,11 @@ import { useLocation } from "react-router-dom";
 export default function Login() {
   usePageTitle("Log in");
   const location = useLocation();
-  const sessionExpired = location.state?.sessionExpired;
+  const sessionExpired =
+    new URLSearchParams(location.search).get("reason") === "session-expired";
   const [show, setShow] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,9 +21,12 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setErrorMessage("");
+    setIsSubmitting(true);
+
     try {
       const response = await loginUser({
-        email: form.email,
+        email: form.email.trim(),
         password: form.password,
       });
 
@@ -32,7 +38,18 @@ export default function Login() {
 
       navigate("/overview", { replace: true });
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      const status = error.response?.status;
+
+      if (status === 401 || status === 400) {
+        setErrorMessage("Invalid email or password. Please try again.");
+      } else {
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Unable to sign in right now. Please try again.",
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -52,6 +69,19 @@ export default function Login() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          {sessionExpired && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3"
+            >
+              <p className="text-[12.5px] font-medium text-amber-800">
+                Your session has expired.
+              </p>
+              <p className="mt-1 text-[12px] text-amber-700">
+                Please sign in again to continue using MacroMind.
+              </p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-[11.5px] font-medium text-gray-500 block mb-1.5">
@@ -93,11 +123,21 @@ export default function Login() {
               </div>
             </div>
 
+            {errorMessage && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3"
+              >
+                <p className="text-[12.5px] text-red-700">{errorMessage}</p>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-brand-400 text-white font-medium text-[13.5px] py-2.5 rounded-xl hover:bg-brand-600 transition-colors mt-2"
+              disabled={isSubmitting}
+              className="w-full bg-brand-400 text-white font-medium text-[13.5px] py-2.5 rounded-xl hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors mt-2"
             >
-              Sign in
+              {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
           </form>
 

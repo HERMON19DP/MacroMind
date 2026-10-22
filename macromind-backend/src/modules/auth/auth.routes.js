@@ -59,6 +59,8 @@ const refreshLimiter = rateLimit({
   },
 });
 
+router.post("/check-email", signupLimiter, authController.checkEmail);
+
 router.post("/signup", signupLimiter, authController.signup);
 
 router.post("/verify-otp", otpVerificationLimiter, authController.verifyOtp);

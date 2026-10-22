@@ -222,6 +222,29 @@ async function sendOtpForSignup(signup) {
   }
 }
 
+async function checkEmailAvailability(data) {
+  const email = normalizeEmail(data.email);
+
+  if (
+    !email ||
+    email.length > 255 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    throw createError("Enter a valid email address");
+  }
+
+  const existingUser = await authRepository.findByEmail(email);
+
+  if (existingUser) {
+    throw createError("An account with this email already exists", 409);
+  }
+
+  return {
+    available: true,
+    message: "Email is available",
+  };
+}
+
 async function signup(data) {
   const signupData = validateSignup(data);
 
@@ -388,4 +411,5 @@ module.exports = {
   resendOtp,
   login,
   refreshAccessToken,
+  checkEmailAvailability,
 };
