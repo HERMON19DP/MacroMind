@@ -15,6 +15,7 @@ import BugReport from "./pages/BugReport";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import PublicRoute from "./components/PublicRoute";
 
 export default function App() {
   return (
@@ -22,18 +23,24 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+
+          {/* Only unauthenticated users can access these pages */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+
           <Route element={<AppLayout />}>
             <Route path="/overview" element={<Dashboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/weight" element={<Weight />} />
-            {/* <Route path="/water" element={<Water />} /> water page is diabled for now */}
+            {/* <Route path="/water" element={<Water />} /> water page is disabled for now */}
             {/* <Route path="/favorites" element={<Favorites />} /> favorites page is disabled for now */}
             <Route path="/settings" element={<Settings />} />
             <Route path="/report-issues" element={<BugReport />} />
           </Route>
+
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="*" element={<NotFound />} />
