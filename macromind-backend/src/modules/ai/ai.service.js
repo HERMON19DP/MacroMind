@@ -2,6 +2,13 @@ const model = require("../../config/gemini");
 const { buildFallbackMealPrompt } = require("./prompts/mealPrompt");
 const parseMealResponse = require("./parsers/mealParser");
 const { parseMealText } = require("./services/mealTextParser");
+const {
+  resolveFoodKey,
+  computeNutrition,
+  parseQuantityAndUnit,
+  buildQuantityLabel,
+  FOOD_LOOKUP,
+} = require("./services/foodLookup.service");
 const MAX_MEAL_TEXT_LENGTH = 100;
 
 const NUTRIENT_FIELDS = ["calories", "protein", "carbs", "fat"];
@@ -69,6 +76,85 @@ function calculateTotals(foods) {
   };
 }
 
+function normalizeFoodName(name) {
+  return String(name || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function mergeAndNormalizeFoods(matched, aiFoods) {
+  const grouped = new Map();
+
+  function addFood(food, isAiFood = false) {
+    const key = resolveFoodKey(food.name);
+
+    if (key) {
+      // Prefer the local lookup's nutrition whenever the quantity
+      // can be interpreted safely.
+      const parsed = parseQuantityAndUnit(food.quantity);
+      const nutrition = computeNutrition(key, parsed.quantity, parsed.unit);
+
+      if (nutrition) {
+        const groupKey = `lookup:${key}:${parsed.unit || FOOD_LOOKUP[key].unit}`;
+
+        const existing = grouped.get(groupKey);
+
+        if (existing) {
+          existing.quantity += parsed.quantity;
+        } else {
+          grouped.set(groupKey, {
+            key,
+            quantity: parsed.quantity,
+            unit: parsed.unit,
+            source: "lookup",
+          });
+        }
+
+        return;
+      }
+    }
+
+    // Preserve unrecognized foods, using their normalized name and
+    // quantity as a grouping key. Do not invent local nutrition data.
+    const name = normalizeFoodName(food.name);
+    const quantity = String(food.quantity || "").trim();
+    const groupKey = `ai:${name}:${quantity}`;
+
+    if (!grouped.has(groupKey)) {
+      grouped.set(groupKey, {
+        name: food.name.trim(),
+        quantity,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+        source: isAiFood ? "llm" : food.source || "llm",
+      });
+    }
+  }
+
+  matched.forEach((food) => addFood(food));
+  aiFoods.forEach((food) => addFood(food, true));
+
+  return [...grouped.values()].map((food) => {
+    if (food.source !== "lookup") {
+      const { source, ...result } = food;
+      return result;
+    }
+
+    const nutrition = computeNutrition(food.key, food.quantity, food.unit);
+
+    return {
+      name: FOOD_LOOKUP[food.key].display,
+      quantity: buildQuantityLabel(food.quantity, food.unit, food.key),
+      ...nutrition,
+    };
+  });
+}
+
 async function analyzeMealText(mealText) {
   if (typeof mealText !== "string" || !mealText.trim()) {
     throw new Error("Meal text is required");
@@ -102,7 +188,7 @@ async function analyzeMealText(mealText) {
     aiFoods = aiResult.foods.map(normalizeAiFood).filter(Boolean);
   }
 
-  const foods = [...matched, ...aiFoods];
+  const foods = mergeAndNormalizeFoods(matched, aiFoods);
 
   return {
     foods,

@@ -7,7 +7,7 @@ const {
 } = require("./foodLookup.service");
 
 const FILLER_PREFIX =
-  /^(?:(?:please\s+)?(?:log|track|record)\s+|i\s+(?:ate|had|drank|consumed|took|finished)\s+|(?:just|also)\s+)+/i;
+  /^(?:(?:please\s+)?(?:log|track|record)\s+|(?:i\s+)?(?:ate|had|drank|consumed|took|finished)\s+|(?:just|also)\s+)+/i;
 
 const FILLER_QUANTITIES =
   /^(?:a little|a bit of|some|a few|approximately|approx\.?|about|around)\s+/i;
@@ -83,6 +83,36 @@ function splitMealText(text) {
   return result;
 }
 
+function aggregateMatchedFoods(items) {
+  const grouped = new Map();
+
+  for (const item of items) {
+    const groupKey = `${item.key}:${item.unit || "default"}`;
+    const existing = grouped.get(groupKey);
+
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      grouped.set(groupKey, {
+        key: item.key,
+        quantity: item.quantity,
+        unit: item.unit || null,
+      });
+    }
+  }
+
+  return [...grouped.values()].map(({ key, quantity, unit }) => {
+    const item = FOOD_LOOKUP[key];
+    const nutrition = computeNutrition(key, quantity, unit);
+
+    return {
+      name: item.display,
+      quantity: buildQuantityLabel(quantity, unit, key),
+      ...nutrition,
+    };
+  });
+}
+
 function parseMealText(text) {
   const segments = splitMealText(text);
   const matched = [];
@@ -115,13 +145,16 @@ function parseMealText(text) {
     const item = FOOD_LOOKUP[key];
 
     matched.push({
-      name: item.display,
-      quantity: buildQuantityLabel(quantity, unit, key),
-      ...nutrition,
+      key,
+      quantity,
+      unit: unit || null,
     });
   }
 
-  return { matched, unmatched };
+  return {
+    matched: aggregateMatchedFoods(matched),
+    unmatched,
+  };
 }
 
 module.exports = {
