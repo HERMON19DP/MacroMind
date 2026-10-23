@@ -5,6 +5,7 @@ const mealService = require("./meal.service");
 const { validateOptionalDate } = require("../../utils/dateValidation");
 const dailyAnalysisQuota = require("./dailyAnalysisQuota.service");
 const pool = require("../../config/db");
+const MAX_MEAL_TEXT_LENGTH = 100;
 
 router.get("/analysis-quota", auth, async (req, res, next) => {
   try {
@@ -44,6 +45,14 @@ router.post("/analyze", auth, async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: "Meal text is required.",
+      });
+    }
+
+    if (req.body.text.length > MAX_MEAL_TEXT_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Your meal description is too long. Please keep it under 2,000 characters and try again.",
       });
     }
 

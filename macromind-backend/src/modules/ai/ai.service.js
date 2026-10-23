@@ -2,6 +2,7 @@ const model = require("../../config/gemini");
 const { buildFallbackMealPrompt } = require("./prompts/mealPrompt");
 const parseMealResponse = require("./parsers/mealParser");
 const { parseMealText } = require("./services/mealTextParser");
+const MAX_MEAL_TEXT_LENGTH = 100;
 
 const NUTRIENT_FIELDS = ["calories", "protein", "carbs", "fat"];
 
@@ -73,7 +74,17 @@ async function analyzeMealText(mealText) {
     throw new Error("Meal text is required");
   }
 
+  if (mealText.length > MAX_MEAL_TEXT_LENGTH) {
+    const error = new Error(
+      "Your meal description is too long. Please keep it under 2,000 characters and try again.",
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   const { matched, unmatched } = parseMealText(mealText);
+
+  // Keep the rest of the existing implementation unchanged.
 
   let aiFoods = [];
 

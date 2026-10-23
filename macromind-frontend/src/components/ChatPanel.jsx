@@ -49,6 +49,7 @@ function foodLines(foods = []) {
 }
 
 const DAILY_LIMIT = 3;
+const MAX_MEAL_TEXT_LENGTH = 100;
 
 const QUOTA_MESSAGE =
   "You've used all 3 AI meal analyses for today. Your quota resets at midnight IST. You can still review your existing chat and saved meals.";
@@ -121,6 +122,7 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
   const send = async () => {
     if (
       !input.trim() ||
+      input.trim().length > MAX_MEAL_TEXT_LENGTH ||
       loading ||
       quotaLoading ||
       quotaError ||
@@ -374,16 +376,32 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
               disabled={analysisDisabled}
+              maxLength={MAX_MEAL_TEXT_LENGTH}
               placeholder={
                 limitReached
                   ? "Daily analysis limit reached — come back tomorrow."
                   : quotaError
                     ? "Unable to check quota. Please refresh the page."
-                    : "e.g. I ate 2 idlis and sambar for breakfast..."
+                    : "e.g. I ate 2 idlis and sambar..."
               }
               rows={2}
               className="w-full bg-transparent text-[13px] text-gray-800 placeholder-gray-400 resize-none outline-none disabled:cursor-not-allowed"
             />
+          </div>
+
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <span
+              aria-live="polite"
+              className={`text-[10px] tabular-nums ${
+                input.length >= MAX_MEAL_TEXT_LENGTH
+                  ? "text-red-600 font-semibold"
+                  : input.length >= 90
+                    ? "text-amber-600"
+                    : "text-gray-400"
+              }`}
+            >
+              {input.length}/{MAX_MEAL_TEXT_LENGTH}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1.5">
