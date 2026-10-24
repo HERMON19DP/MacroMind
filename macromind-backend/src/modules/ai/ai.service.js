@@ -1,4 +1,4 @@
-const model = require("../../config/gemini");
+const client = require("../../config/openai");
 const { buildFallbackMealPrompt } = require("./prompts/mealPrompt");
 const parseMealResponse = require("./parsers/mealParser");
 const { parseMealText } = require("./services/mealTextParser");
@@ -13,10 +13,16 @@ const MAX_MEAL_TEXT_LENGTH = 100;
 
 const NUTRIENT_FIELDS = ["calories", "protein", "carbs", "fat"];
 
-async function testGemini(prompt) {
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+async function testOpenAI(prompt) {
+  const response = await client.responses.create({
+    model: "gpt-6-luna",
+    reasoning: {
+      effort: "none",
+    },
+    input: prompt,
+  });
+
+  return response.output_text;
 }
 
 function toFiniteNumber(value) {
@@ -176,10 +182,22 @@ async function analyzeMealText(mealText) {
 
   if (unmatched.length > 0) {
     const prompt = buildFallbackMealPrompt(unmatched.map((item) => item.raw));
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
 
-    const aiResult = parseMealResponse(response.text());
+    const response = await client.responses.create({
+      model: "gpt-6-luna",
+      reasoning: {
+        effort: "none",
+      },
+      temperature: 0,
+      text: {
+        format: {
+          type: "json_object",
+        },
+      },
+      input: prompt,
+    });
+
+    const aiResult = parseMealResponse(response.output_text);
 
     if (!aiResult || !Array.isArray(aiResult.foods)) {
       throw new Error("AI returned an invalid meal analysis");
@@ -197,6 +215,6 @@ async function analyzeMealText(mealText) {
 }
 
 module.exports = {
-  testGemini,
+  testOpenAI,
   analyzeMealText,
 };

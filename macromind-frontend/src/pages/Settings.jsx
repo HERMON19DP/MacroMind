@@ -430,7 +430,7 @@ export default function Settings() {
           </div>
 
           {/* Notifications — UI only for now */}
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {/* <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
               <Bell size={14} className="text-gray-400" />
               <p className="text-[13px] font-semibold text-gray-800">
@@ -474,7 +474,7 @@ export default function Settings() {
                 Notification preferences are coming soon.
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Save / danger */}
           <div className="space-y-3">

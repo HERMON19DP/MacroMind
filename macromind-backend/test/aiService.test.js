@@ -1,21 +1,21 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const model = require("../src/config/gemini");
+const client = require("../src/config/openai");
 const aiService = require("../src/modules/ai/ai.service");
 
-const originalGenerateContent = model.generateContent;
+const originalCreate = client.responses.create;
 
 test.afterEach(() => {
-  model.generateContent = originalGenerateContent;
+  client.responses.create = originalCreate;
 });
 
-test("does not call Gemini when every food is recognized", async () => {
+test("does not call OpenAI when every food is recognized", async () => {
   let called = false;
 
-  model.generateContent = async () => {
+  client.responses.create = async () => {
     called = true;
-    throw new Error("Gemini should not have been called");
+    throw new Error("OpenAI should not have been called");
   };
 
   const result = await aiService.analyzeMealText("2 idlis");
@@ -25,28 +25,25 @@ test("does not call Gemini when every food is recognized", async () => {
   assert.equal(result.totals.calories, 116);
 });
 
-test("sends only unmatched foods to Gemini", async () => {
+test("sends only unmatched foods to OpenAI", async () => {
   let capturedPrompt = "";
 
-  model.generateContent = async (prompt) => {
-    capturedPrompt = prompt;
+  client.responses.create = async ({ input }) => {
+    capturedPrompt = input;
 
     return {
-      response: {
-        text: () =>
-          JSON.stringify({
-            foods: [
-              {
-                name: "Regional Dish",
-                quantity: "1 serving",
-                calories: 200,
-                protein: 8,
-                carbs: 25,
-                fat: 7,
-              },
-            ],
-          }),
-      },
+      output_text: JSON.stringify({
+        foods: [
+          {
+            name: "Regional Dish",
+            quantity: "1 serving",
+            calories: 200,
+            protein: 8,
+            carbs: 25,
+            fat: 7,
+          },
+        ],
+      }),
     };
   };
 
@@ -63,22 +60,19 @@ test("sends only unmatched foods to Gemini", async () => {
 });
 
 test("recalculates totals from returned foods", async () => {
-  model.generateContent = async () => ({
-    response: {
-      text: () =>
-        JSON.stringify({
-          foods: [
-            {
-              name: "Regional Dish",
-              quantity: "1 serving",
-              calories: 200,
-              protein: 8,
-              carbs: 25,
-              fat: 7,
-            },
-          ],
-        }),
-    },
+  client.responses.create = async () => ({
+    output_text: JSON.stringify({
+      foods: [
+        {
+          name: "Regional Dish",
+          quantity: "1 serving",
+          calories: 200,
+          protein: 8,
+          carbs: 25,
+          fat: 7,
+        },
+      ],
+    }),
   });
 
   const result = await aiService.analyzeMealText(
@@ -93,11 +87,9 @@ test("recalculates totals from returned foods", async () => {
   assert.equal(result.totals.calories, sumCalories);
 });
 
-test("rejects malformed Gemini JSON", async () => {
-  model.generateContent = async () => ({
-    response: {
-      text: () => "This is not JSON",
-    },
+test("rejects malformed OpenAI JSON", async () => {
+  client.responses.create = async () => ({
+    output_text: "This is not JSON",
   });
 
   await assert.rejects(aiService.analyzeMealText("1 unfamiliar regional dish"));

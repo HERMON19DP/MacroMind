@@ -18,7 +18,7 @@ const aiTestLimiter = rateLimit({
 
 router.post("/test", auth, aiTestLimiter, async (req, res, next) => {
   try {
-    const response = await aiService.testGemini(req.body.prompt);
+    const response = await aiService.testOpenAI(req.body.prompt);
 
     res.json({
       success: true,
