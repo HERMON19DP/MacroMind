@@ -48,11 +48,11 @@ function foodLines(foods = []) {
     .join("\n");
 }
 
-const DAILY_LIMIT = 3;
+const DAILY_LIMIT = 4;
 const MAX_MEAL_TEXT_LENGTH = 100;
 
 const QUOTA_MESSAGE =
-  "You've used all 3 AI meal analyses for today. Your quota resets at midnight IST. You can still review your existing chat and saved meals.";
+  "You've used all 4 AI meal analyses for today. Your quota resets at midnight IST. You can still review your existing chat and saved meals.";
 
 export default function ChatPanel({ compact = false, onAnalysisReady }) {
   const messages = useChatStore((s) => s.messages);
@@ -284,7 +284,7 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
             </p>
 
             <p className="mt-1 text-xs leading-relaxed text-amber-800">
-              You&apos;ve used all 3 analyses for today. Your quota resets at
+              You&apos;ve used all 4 analyses for today. Your quota resets at
               midnight IST. You can continue reviewing your existing chat and
               saved meals.
             </p>

@@ -1,6 +1,6 @@
 const pool = require("../../config/db");
 
-const DAILY_ANALYSIS_LIMIT = 3;
+const DAILY_ANALYSIS_LIMIT = 4;
 
 async function reserveAnalysis(userId) {
   const result = await pool.query(
@@ -26,7 +26,7 @@ async function reserveAnalysis(userId) {
 
   if (result.rowCount === 0) {
     const error = new Error(
-      "Daily analysis limit reached. You can analyze up to 3 meals per day. Please try again tomorrow.",
+      "Daily analysis limit reached. You can analyze up to 4 meals per day. Please try again tomorrow.",
     );
 
     error.statusCode = 429;
