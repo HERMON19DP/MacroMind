@@ -24,12 +24,14 @@ router.get("/analysis-quota", auth, async (req, res, next) => {
 
     const used = Number(result.rows[0].used);
 
+    const limit = dailyAnalysisQuota.DAILY_ANALYSIS_LIMIT;
+
     res.json({
       success: true,
       data: {
         used,
-        limit: 3,
-        remaining: Math.max(0, 3 - used),
+        limit,
+        remaining: Math.max(0, limit - used),
       },
     });
   } catch (error) {
