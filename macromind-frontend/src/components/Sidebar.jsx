@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "./ConfirmDialog";
+import logo from "../assets/macromind-logo-transparent.png";
 
 const navItems = [
   { label: "Dashboard", to: "/overview", icon: LayoutDashboard },
@@ -41,10 +42,13 @@ export default function Sidebar() {
     <>
       <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
         {/* Logo */}
-        <div className="px-5 py-5 flex items-center gap-2 border-b border-gray-100">
-          <div className="w-7 h-7 rounded-lg bg-brand-400 flex items-center justify-center">
-            <Leaf size={15} className="text-white" />
-          </div>
+        <div className="px-5 py-4 flex items-center gap-2.5 border-b border-gray-100">
+          <img
+            src={logo}
+            alt="MacroMind"
+            className="h-9 w-9 object-contain shrink-0"
+          />
+
           <span className="text-[15px] font-semibold text-gray-900 tracking-tight">
             MacroMind
           </span>
