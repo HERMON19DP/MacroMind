@@ -45,16 +45,16 @@ const cardVariants = {
 
 export default function Features() {
   return (
-    <section id="features" className="py-24 sm:py-28 bg-gray-50">
+    <section id="features" className="bg-gray-50 py-14 sm:py-28">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
-        <div className="max-w-xl mb-14">
+        <div className="mb-9 max-w-xl sm:mb-14">
           <p className="text-[12px] font-semibold text-brand-600 uppercase tracking-wide mb-3">Features</p>
-          <h2 className="text-[32px] sm:text-[38px] font-semibold text-gray-900 tracking-tight leading-tight">
+          <h2 className="text-[clamp(1.75rem,7vw,2.375rem)] font-semibold leading-tight tracking-tight text-gray-900">
             Everything nutrition tracking should have been from the start
           </h2>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
@@ -64,7 +64,7 @@ export default function Features() {
               whileInView="show"
               viewport={{ once: true, margin: '-60px' }}
               whileHover={{ y: -4 }}
-              className="group relative bg-white rounded-2xl border border-gray-100 p-6 transition-shadow hover:shadow-lg hover:shadow-brand-900/5"
+              className="group relative rounded-2xl border border-gray-100 bg-white p-5 transition-shadow hover:shadow-lg hover:shadow-brand-900/5 sm:p-6"
             >
               <div
                 className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"

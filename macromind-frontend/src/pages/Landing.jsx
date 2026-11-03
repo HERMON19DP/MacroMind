@@ -371,7 +371,7 @@ function Hero() {
   return (
     <section
       id="about"
-      className="relative scroll-mt-20 overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28"
+      className="relative scroll-mt-20 overflow-hidden pt-24 pb-14 sm:pt-40 sm:pb-28"
     >
       <div
         aria-hidden
@@ -382,41 +382,41 @@ function Hero() {
         }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-16 items-center">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-8 sm:gap-16 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-full pl-2 pr-3 py-1 mb-6 shadow-sm">
+          <div className="mb-5 inline-flex max-w-full items-center gap-1.5 rounded-full border border-gray-200 bg-white py-1 pl-2 pr-3 shadow-sm sm:mb-6">
             <span className="w-4 h-4 rounded-full bg-gradient-to-br from-brand-400 to-cyan-400 flex items-center justify-center">
               <Sparkles size={9} className="text-white" />
             </span>
-            <span className="text-[11.5px] font-medium text-gray-600">
+            <span className="text-[11px] font-medium leading-4 text-gray-600 sm:text-[11.5px]">
               Now understands Indian home cooking
             </span>
           </div>
 
-          <h1 className="text-[42px] sm:text-[54px] leading-[1.05] font-semibold text-gray-900 tracking-tight mb-5">
+          <h1 className="text-[clamp(2rem,8vw,3.375rem)] leading-[1.08] font-semibold text-gray-900 tracking-tight mb-5">
             AI-powered nutrition that thinks like a dietitian
           </h1>
 
-          <p className="text-[16px] sm:text-[17px] text-gray-500 leading-relaxed max-w-md mb-8">
+          <p className="mb-6 max-w-md text-[15px] leading-relaxed text-gray-500 sm:mb-8 sm:text-[17px]">
             Describe what you ate, or snap a photo. MacroMind reads it,
             calculates the calories and macros, and keeps your goals on track —
             no manual food search required.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row">
             <Link
               to="/register"
-              className="inline-flex items-center justify-center bg-brand-400 hover:bg-brand-600 text-white font-medium text-[14px] px-6 py-3 rounded-xl transition-colors"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-brand-400 px-6 py-3 text-[14px] font-medium text-white transition-colors hover:bg-brand-600 sm:w-auto"
             >
               Start free
             </Link>
             <button
               onClick={() => scrollToSection("ai")}
-              className="inline-flex items-center justify-center border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium text-[14px] px-6 py-3 rounded-xl transition-colors"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 px-6 py-3 text-[14px] font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
             >
               See it analyze a meal
             </button>
