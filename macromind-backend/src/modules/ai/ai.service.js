@@ -147,8 +147,7 @@ function mergeAndNormalizeFoods(matched, aiFoods) {
 
   return [...grouped.values()].map((food) => {
     if (food.source !== "lookup") {
-      const { source, ...result } = food;
-      return result;
+      return food;
     }
 
     const nutrition = computeNutrition(food.key, food.quantity, food.unit);
@@ -157,6 +156,7 @@ function mergeAndNormalizeFoods(matched, aiFoods) {
       name: FOOD_LOOKUP[food.key].display,
       quantity: buildQuantityLabel(food.quantity, food.unit, food.key),
       ...nutrition,
+      source: "lookup",
     };
   });
 }

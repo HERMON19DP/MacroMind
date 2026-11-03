@@ -65,7 +65,7 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
   const [quotaError, setQuotaError] = useState(false);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
 
-  const bottomRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const refreshQuota = useCallback(async () => {
@@ -89,7 +89,11 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
   }, [refreshQuota]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages, loading]);
 
   const isQuotaExceeded = (error) =>
@@ -293,7 +297,10 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
       )}
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-3"
+      >
         {messages.map((msg, i) => (
           <div
             key={i}
@@ -357,8 +364,6 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
             </div>
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
       {/* Text and photo input */}

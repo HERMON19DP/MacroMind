@@ -130,9 +130,9 @@ export default function BugReport() {
         subtitle="Help us make MacroMind better"
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="min-w-0 flex-1 overflow-y-auto px-3 py-4 sm:p-6">
         <div className="max-w-2xl mx-auto space-y-5">
-          <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6">
+          <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-4 sm:p-6">
             <div className="flex items-start gap-3 mb-6">
               <div className="w-11 h-11 shrink-0 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
                 <Bug size={22} />
@@ -142,7 +142,7 @@ export default function BugReport() {
                 <h2 className="text-base font-semibold text-gray-900">
                   Something not working?
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="mt-1 text-sm leading-5 text-gray-500">
                   Tell us what happened. Screenshots help us understand and
                   reproduce the issue.
                 </p>
@@ -220,7 +220,7 @@ export default function BugReport() {
 
                 <label
                   htmlFor="bug-screenshots"
-                  className={`flex flex-col items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl p-6 text-center transition-colors ${
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 p-4 text-center transition-colors sm:p-6 ${
                     files.length >= MAX_FILES
                       ? "opacity-50 cursor-not-allowed"
                       : "cursor-pointer hover:border-brand-400 hover:bg-brand-50/40"
@@ -246,7 +246,7 @@ export default function BugReport() {
                 </label>
 
                 {files.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {files.map((file, index) => (
                       <div
                         key={`${file.name}-${file.size}-${index}`}
@@ -298,7 +298,7 @@ export default function BugReport() {
                 <button
                   type="submit"
                   disabled={submitting || !title.trim() || !description.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-400 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-400 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2.5"
                 >
                   {submitting ? (
                     <Loader2 size={16} className="animate-spin" />

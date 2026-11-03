@@ -210,18 +210,20 @@ export default function Settings() {
       <Topbar title="Settings" subtitle="Manage your profile and preferences" />
 
       {hasUnsavedChanges && (
-        <div className="sticky top-0 z-20 px-5 pt-3">
+        <div className="sticky top-0 z-20 px-3 sm:px-5 pt-3">
           <div
             role="status"
             aria-live="polite"
-            className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 sm:px-4 py-3 shadow-sm"
           >
             <div className="flex items-start gap-2">
               <span className="text-amber-600 font-bold">!</span>
+
               <div>
                 <p className="text-[12.5px] font-semibold text-amber-800">
                   Unsaved changes
                 </p>
+
                 <p className="text-[11px] text-amber-700">
                   Remember to save your settings.
                 </p>
@@ -232,7 +234,7 @@ export default function Settings() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="shrink-0 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+              className="w-full sm:w-auto shrink-0 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save now"}
             </button>
@@ -240,12 +242,13 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-5">
-        <div className="max-w-2xl mx-auto space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 lg:p-5">
+        <div className="w-full max-w-2xl mx-auto space-y-4 sm:space-y-5">
           {/* Profile */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-              <User size={14} className="text-gray-400" />
+            <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+              <User size={14} className="text-gray-400 shrink-0" />
+
               <p className="text-[13px] font-semibold text-gray-800">Profile</p>
 
               {profileHasChanges && (
@@ -254,7 +257,8 @@ export default function Settings() {
                 </span>
               )}
             </div>
-            <div className="p-4 grid grid-cols-2 gap-3">
+
+            <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 { label: "Full name", name: "name", type: "text" },
                 {
@@ -276,30 +280,32 @@ export default function Settings() {
                   type: "number",
                 },
               ].map((f) => (
-                <div key={f.name}>
+                <div key={f.name} className="min-w-0">
                   <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
                     {f.label}
                   </label>
+
                   <input
                     type={f.type}
                     name={f.name}
                     value={form[f.name]}
                     onChange={handleChange}
                     disabled={f.disabled}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-50 transition-all disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-50 transition-all disabled:bg-gray-50 disabled:text-gray-400"
                   />
                 </div>
               ))}
 
-              <div>
+              <div className="min-w-0">
                 <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
                   Gender
                 </label>
+
                 <select
                   name="gender"
                   value={form.gender}
                   onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                  className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-800 outline-none focus:border-brand-400"
                 >
                   <option value="">Select</option>
                   <option value="male">Male</option>
@@ -307,15 +313,16 @@ export default function Settings() {
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
                   Activity level
                 </label>
+
                 <select
                   name="activityLevel"
                   value={form.activityLevel}
                   onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                  className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-800 outline-none focus:border-brand-400"
                 >
                   <option value="sedentary">Sedentary</option>
                   <option value="lightly_active">Lightly active</option>
@@ -326,15 +333,16 @@ export default function Settings() {
               </div>
 
               {form.goal !== "Maintain weight" && (
-                <div>
+                <div className="min-w-0">
                   <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
                     Weekly {form.goal === "Gain weight" ? "gain" : "loss"} rate
                   </label>
+
                   <select
                     name="goalRateKgWeek"
                     value={form.goalRateKgWeek}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                    className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-800 outline-none focus:border-brand-400"
                   >
                     <option value="0.25">0.25 kg/week</option>
                     <option value="0.5">0.5 kg/week</option>
@@ -345,10 +353,11 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Goal */}
+          {/* Goal settings */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-              <Target size={14} className="text-gray-400" />
+            <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+              <Target size={14} className="text-gray-400 shrink-0" />
+
               <p className="text-[13px] font-semibold text-gray-800">
                 Goal settings
               </p>
@@ -359,16 +368,18 @@ export default function Settings() {
                 </span>
               )}
             </div>
-            <div className="p-4 space-y-3">
+
+            <div className="p-3 sm:p-4 space-y-4">
               <div>
                 <label className="text-[11px] font-medium text-gray-500 block mb-1.5">
                   Goal type
                 </label>
+
                 <select
                   name="goal"
                   value={form.goal}
                   onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 outline-none focus:border-brand-400"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-800 outline-none focus:border-brand-400"
                 >
                   <option>Lose weight</option>
                   <option>Gain weight</option>
@@ -377,7 +388,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                   <label className="text-[11px] font-medium text-gray-500">
                     Daily calorie goal —{" "}
                     <span className="text-brand-600 font-semibold">
@@ -387,7 +398,7 @@ export default function Settings() {
 
                   {suggestLoading && (
                     <span className="text-[10.5px] text-gray-400 flex items-center gap-1">
-                      <Loader2 size={10} className="animate-spin" />{" "}
+                      <Loader2 size={10} className="animate-spin" />
                       Calculating...
                     </span>
                   )}
@@ -397,9 +408,10 @@ export default function Settings() {
                     suggested !== Number(form.dailyCalorieGoal) && (
                       <button
                         onClick={applySuggestion}
-                        className="text-[10.5px] font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
+                        className="text-left text-[10.5px] font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
                       >
-                        <Sparkles size={11} /> Use suggested {suggested} kcal
+                        <Sparkles size={11} />
+                        Use suggested {suggested} kcal
                       </button>
                     )}
                 </div>
@@ -414,6 +426,7 @@ export default function Settings() {
                   onChange={handleChange}
                   className="w-full accent-brand-400"
                 />
+
                 <div className="flex justify-between text-[10.5px] text-gray-400 mt-1">
                   <span>1200</span>
                   <span>4000</span>
@@ -429,79 +442,26 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Notifications — UI only for now */}
-          {/* <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-              <Bell size={14} className="text-gray-400" />
-              <p className="text-[13px] font-semibold text-gray-800">
-                Notifications
-              </p>
-            </div>
-            <div className="p-4 space-y-3">
-              {[
-                {
-                  label: "Meal logging reminders",
-                  sub: "Get reminded to log breakfast, lunch, and dinner",
-                },
-                {
-                  label: "Weekly report ready",
-                  sub: "Notification when your weekly summary is available",
-                },
-                {
-                  label: "Goal milestones",
-                  sub: "Celebrate when you hit your targets",
-                },
-              ].map((n, i) => (
-                <div key={i} className="flex items-center justify-between py-1">
-                  <div>
-                    <p className="text-[13px] font-medium text-gray-800">
-                      {n.label}
-                    </p>
-                    <p className="text-[11px] text-gray-400">{n.sub}</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-not-allowed opacity-60">
-                    <input
-                      type="checkbox"
-                      defaultChecked={i < 2}
-                      className="sr-only peer"
-                      disabled
-                    />
-                    <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-brand-400 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
-                  </label>
-                </div>
-              ))}
-              <p className="text-[10.5px] text-gray-400">
-                Notification preferences are coming soon.
-              </p>
-            </div>
-          </div> */}
-
-          {/* Save / danger */}
+          {/* Save */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handleSave}
-                disabled={saving || !hasUnsavedChanges}
-                className={
-                  "text-[13px] font-semibold px-6 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed " +
-                  (hasUnsavedChanges
-                    ? "bg-amber-500 text-white ring-4 ring-amber-100 shadow-md hover:bg-amber-600"
-                    : "bg-brand-400 text-white hover:bg-brand-600")
-                }
-              >
-                {saving
-                  ? "Saving..."
-                  : saved
-                    ? "Saved ✓"
-                    : hasUnsavedChanges
-                      ? "Save changes •"
-                      : "Save changes"}
-              </button>
-
-              {/* <button className="flex items-center gap-1.5 text-[12.5px] text-red-400 hover:text-red-600 transition-colors">
-                <Trash2 size={13} /> Delete account
-              </button> */}
-            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving || !hasUnsavedChanges}
+              className={
+                "w-full sm:w-auto text-[13px] font-semibold px-6 py-3 sm:py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed " +
+                (hasUnsavedChanges
+                  ? "bg-amber-500 text-white ring-4 ring-amber-100 shadow-md hover:bg-amber-600"
+                  : "bg-brand-400 text-white hover:bg-brand-600")
+              }
+            >
+              {saving
+                ? "Saving..."
+                : saved
+                  ? "Saved ✓"
+                  : hasUnsavedChanges
+                    ? "Save changes •"
+                    : "Save changes"}
+            </button>
           </div>
         </div>
       </div>

@@ -5,10 +5,8 @@ import {
   MessageSquare,
   BarChart2,
   Scale,
-  Droplets,
   Settings,
   LogOut,
-  Leaf,
   Bug,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -20,8 +18,8 @@ const navItems = [
   { label: "AI Chat", to: "/chat", icon: MessageSquare },
   { label: "Reports", to: "/reports", icon: BarChart2 },
   { label: "Weight", to: "/weight", icon: Scale },
-  // { label: "Water", to: "/water", icon: Droplets }, is disabled for now
-  // Favorites page is disabled for now.
+  { label: "Settings", to: "/settings", icon: Settings },
+  { label: "Issues", to: "/report-issues", icon: Bug },
 ];
 
 export default function Sidebar() {
@@ -33,15 +31,21 @@ export default function Sidebar() {
     logout();
     setShowLogoutDialog(false);
 
-    // Replace the current route and reset navigation to the homepage.
     window.history.replaceState(null, "", "/");
     navigate("/", { replace: true });
   };
 
+  const navLinkClass = ({ isActive }) =>
+    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
+      isActive
+        ? "bg-brand-50 text-brand-600"
+        : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+    }`;
+
   return (
     <>
-      <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
-        {/* Logo */}
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-56 shrink-0 bg-white border-r border-gray-100 flex-col h-screen sticky top-0">
         <div className="px-5 py-4 flex items-center gap-2.5 border-b border-gray-100">
           <img
             src={logo}
@@ -54,59 +58,15 @@ export default function Sidebar() {
           </span>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
           {navItems.map(({ label, to, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-50 text-brand-600"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                }`
-              }
-            >
+            <NavLink key={to} to={to} className={navLinkClass}>
               <Icon size={16} />
-              {label}
+              {label === "Issues" ? "Report Bug / Issues" : label}
             </NavLink>
           ))}
-
-          <div className="mt-2 pt-2 border-t border-gray-100">
-            <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-50 text-brand-600"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                }`
-              }
-            >
-              <Settings size={16} />
-              Settings
-            </NavLink>
-          </div>
-
-          <div className="mt-1">
-            <NavLink
-              to="/report-issues"
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-50 text-brand-600"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                }`
-              }
-            >
-              <Bug size={16} />
-              Report Bug / Issues
-            </NavLink>
-          </div>
         </nav>
 
-        {/* User */}
         <div className="px-3 py-3 border-t border-gray-100">
           <div className="flex items-center gap-2.5 px-2 py-2">
             <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-[11px] font-semibold text-brand-600 shrink-0">
@@ -136,7 +96,43 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Sign-out confirmation */}
+      {/* Mobile bottom navigation */}
+      <nav
+        aria-label="Mobile navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden overflow-x-auto border-t border-gray-200 bg-white"
+      >
+        {navItems.map(({ label, to, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            aria-label={label}
+            className={({ isActive }) =>
+              `flex min-w-[56px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[9px] font-medium transition-colors ${
+                isActive ? "text-brand-600" : "text-gray-500"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={18} strokeWidth={isActive ? 2.4 : 1.8} />
+                <span className="whitespace-nowrap">{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setShowLogoutDialog(true)}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex min-w-[56px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[9px] font-medium text-gray-500"
+        >
+          <LogOut size={18} />
+          <span>Logout</span>
+        </button>
+      </nav>
+
       <ConfirmDialog
         open={showLogoutDialog}
         title="Sign out?"
