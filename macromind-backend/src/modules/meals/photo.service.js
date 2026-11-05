@@ -4,7 +4,7 @@ const client = require("../../config/openai");
 
 const { buildPhotoMealPrompt } = require("../ai/prompts/photoMealPrompt");
 const parseMealResponse = require("../ai/parsers/mealParser");
-const { overrideWithLookup } = require("../ai/services/foodLookup.service");
+// const { overrideWithLookup } = require("../ai/services/foodLookup.service");
 
 async function analyzePhoto(imagePath) {
   const imageBuffer = fs.readFileSync(imagePath);
@@ -40,7 +40,15 @@ async function analyzePhoto(imagePath) {
   });
 
   const analysis = parseMealResponse(response.output_text);
-  const foods = overrideWithLookup(analysis.foods || []);
+
+  if (!analysis || !Array.isArray(analysis.foods)) {
+    throw new Error("AI returned an invalid meal analysis");
+  }
+
+  const foods = analysis.foods.map((food) => ({
+    ...food,
+    source: "llm",
+  }));
 
   const totals = foods.reduce(
     (acc, food) => ({
