@@ -177,7 +177,7 @@ export default function Reports() {
           ].map((s) => (
             <div
               key={s.label}
-              className="min-w-0 bg-white rounded-xl border border-gray-100 p-3 sm:p-4"
+              className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4"
             >
               <div className="flex items-start justify-between gap-1 mb-2">
                 <p className="text-[10px] sm:text-[11px] text-gray-400 uppercase tracking-wide font-medium">
@@ -197,7 +197,7 @@ export default function Reports() {
         </div>
 
         {/* Consistency score */}
-        <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 mb-4 sm:mb-5 flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4 sm:mb-5 flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4">
           <div className="relative w-20 h-20 shrink-0">
             <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
               <circle
@@ -244,7 +244,7 @@ export default function Reports() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           {/* Calorie bar chart */}
-          <div className="min-w-0 bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+          <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4">
             <p className="text-[13px] font-semibold text-gray-800 mb-3">
               Daily calories
             </p>
@@ -294,7 +294,7 @@ export default function Reports() {
           </div>
 
           {/* Protein line chart */}
-          <div className="min-w-0 bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+          <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4">
             <p className="text-[13px] font-semibold text-gray-800 mb-3">
               Daily protein
             </p>
@@ -345,7 +345,7 @@ export default function Reports() {
         </div>
 
         {/* Macro split */}
-        <div className="min-w-0 bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+        <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4">
           <p className="text-[13px] font-semibold text-gray-800 mb-4">
             Avg macro split
           </p>

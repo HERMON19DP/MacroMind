@@ -246,7 +246,7 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
 
   return (
     <div
-      className={`bg-white rounded-xl border border-gray-100 flex flex-col ${
+      className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col ${
         compact ? "h-full" : "h-[600px]"
       }`}
     >

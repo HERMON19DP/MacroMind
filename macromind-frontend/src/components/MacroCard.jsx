@@ -49,7 +49,7 @@ export default function MacroCard({
   const c = colorMap[color] || colorMap.brand;
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl border border-gray-100 bg-white p-4">
+    <div className="flex flex-col gap-2.5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <span className="text-[11.5px] font-medium uppercase tracking-wide text-gray-400">
           {label}
