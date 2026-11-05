@@ -150,7 +150,7 @@ export default function ChatPanel({ compact = false, onAnalysisReady }) {
         role: "assistant",
         text: `Meal analysed. I detected:\n${foodLines(analysis.foods)}`,
         foods: analysis.foods,
-        outro: "Review the meal on the right and press Save when you're ready.",
+        outro: "Review your meal and select Save when you're ready.",
       });
 
       onAnalysisReady?.(analysis, userMsg);

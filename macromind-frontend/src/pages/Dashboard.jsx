@@ -241,7 +241,7 @@ export default function Dashboard() {
       {/* Single dashboard scroll container */}
       <div className="flex-1 overflow-y-auto">
         {/* Date selector and week strip */}
-        <div className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-5">
+        <div className="sticky top-0 z-50 bg-white border-b border-gray-100 px-3 sm:px-6 py-5">
           <div className="mb-5">
             <DateDropdown
               selectedDate={selectedDate}
@@ -250,7 +250,7 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-3 inline-flex gap-2 shadow-sm">
+          <div className="grid w-full grid-cols-7 gap-1 rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
             {week.map((day) => (
               <button
                 key={toISODate(day.fullDate)}
@@ -258,7 +258,7 @@ export default function Dashboard() {
                 disabled={day.isFuture}
                 onClick={() => setSelectedDate(day.fullDate)}
                 aria-pressed={day.isSelected}
-                className={`flex flex-col items-center justify-center rounded-xl px-4 py-2 transition-all ${
+                className={`flex min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2 transition-all ${
                   day.isFuture
                     ? "opacity-50 cursor-not-allowed"
                     : day.isSelected
@@ -267,7 +267,7 @@ export default function Dashboard() {
                 }`}
               >
                 <span
-                  className={`text-[11px] ${
+                  className={`text-[10px] sm:text-[11px] ${
                     day.isSelected && !day.isFuture
                       ? "text-white/80"
                       : "text-gray-400"
@@ -276,7 +276,9 @@ export default function Dashboard() {
                   {day.day}
                 </span>
 
-                <span className="text-lg font-semibold mt-1">{day.date}</span>
+                <span className="mt-1 text-base font-semibold sm:text-lg">
+                  {day.date}
+                </span>
               </button>
             ))}
           </div>
