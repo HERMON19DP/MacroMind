@@ -6,8 +6,6 @@ import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import Reports from "./pages/Reports";
 import Weight from "./pages/Weight";
-import Water from "./pages/Water";
-import Favorites from "./pages/Favorites";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -35,8 +33,6 @@ export default function App() {
             <Route path="/chat" element={<Chat />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/weight" element={<Weight />} />
-            {/* <Route path="/water" element={<Water />} /> water page is disabled for now */}
-            {/* <Route path="/favorites" element={<Favorites />} /> favorites page is disabled for now */}
             <Route path="/settings" element={<Settings />} />
             <Route path="/report-issues" element={<BugReport />} />
           </Route>
